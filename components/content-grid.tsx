@@ -26,35 +26,37 @@ export function ContentGrid({ items }: ContentGridProps) {
       {items && items.length > 0 ? (
         items.map((item) => (
           <div key={item.id || `item-${Math.random()}`} className="flex flex-col group">
-            <div className="relative aspect-[2/3] rounded-md overflow-hidden">
-              <Image
-                src={item.poster || item.thumbnail || "/placeholder.svg?height=600&width=400"}
-                alt={item.title || "Content item"}
-                fill
-                className="object-cover transition-transform duration-300 group-hover:scale-105"
-              />
+            <Link href={`/details/${item.id}`}>
+              <div className="relative aspect-[2/3] rounded-md overflow-hidden">
+                <Image
+                  src={item.poster || item.thumbnail || "/placeholder.svg?height=600&width=400"}
+                  alt={item.title || "Content item"}
+                  fill
+                  className="object-cover transition-transform duration-300 group-hover:scale-105"
+                />
 
-              {item.progress !== undefined && (
-                <div className="absolute bottom-0 left-0 right-0 h-1 bg-gray-700">
-                  <div className="h-full bg-red-600" style={{ width: `${item.progress}%` }} />
-                </div>
-              )}
+                {item.progress !== undefined && (
+                  <div className="absolute bottom-0 left-0 right-0 h-1 bg-gray-700">
+                    <div className="h-full bg-red-600" style={{ width: `${item.progress}%` }} />
+                  </div>
+                )}
 
-              <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
-                <Button asChild size="sm" variant="secondary" className="rounded-full">
-                  <Link href={`/watch/${item.id}`}>
-                    <Play className="w-4 h-4" />
-                    <span className="sr-only">Play</span>
-                  </Link>
-                </Button>
-                <Button asChild size="sm" variant="outline" className="rounded-full">
-                  <Link href={`/details/${item.id}`}>
-                    <Info className="w-4 h-4" />
-                    <span className="sr-only">More Info</span>
-                  </Link>
-                </Button>
+                {/* <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                  <Button asChild size="sm" variant="secondary" className="rounded-full">
+                    <Link href={`/watch/${item.id}`}>
+                      <Play className="w-4 h-4" />
+                      <span className="sr-only">Play</span>
+                    </Link>
+                  </Button>
+                  <Button asChild size="sm" variant="outline" className="rounded-full">
+                    <Link href={`/details/${item.id}`}>
+                      <Info className="w-4 h-4" />
+                      <span className="sr-only">More Info</span>
+                    </Link>
+                  </Button>
+                </div> */}
               </div>
-            </div>
+            </Link>
 
             <div className="mt-2">
               <Link href={`/details/${item.id}`} className="hover:text-primary transition-colors">
