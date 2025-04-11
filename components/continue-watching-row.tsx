@@ -47,6 +47,7 @@ export function ContinueWatchingRow() {
                   title: show.title,
                   subtitle: `S${seasonNumber} E${episodeNumber}: ${episode.title}`,
                   thumbnail: episode.stillImage || show.thumbnail,
+                  poster: show.poster,
                   progress: item.percent,
                   watchUrl: `/watch/episode/${showId}/${seasonNumber}/${episodeNumber}`,
                   type: "episode",
@@ -60,6 +61,7 @@ export function ContinueWatchingRow() {
                   title: content.title,
                   subtitle: content.category === "movie" ? "Movie" : "TV Show",
                   thumbnail: content.thumbnail,
+                  poster: content.poster,
                   progress: item.percent,
                   watchUrl: `/watch/${item.id}`,
                   type: content.category,
@@ -113,9 +115,9 @@ export function ContinueWatchingRow() {
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
         {items.map((item) => (
           <div key={item.id} className="relative group">
-            <div className="relative aspect-video rounded-md overflow-hidden">
+            <div className="relative aspect-[2/3] rounded-md overflow-hidden">
               <Image
-                src={item.thumbnail || "/placeholder.svg?height=169&width=300"}
+                src={item.poster || item.thumbnail || "/placeholder.svg?height=600&width=400"}
                 alt={item.title}
                 fill
                 className="object-cover transition-transform duration-300 group-hover:scale-105"

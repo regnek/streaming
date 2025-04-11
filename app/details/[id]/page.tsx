@@ -480,9 +480,9 @@ export default function DetailsPage() {
               {details.similar.slice(0, 5).map((item: any) => (
                 <div key={item.id} className="flex flex-col">
                   <Link href={`/details/${item.id}`} className="block relative group rounded-md overflow-hidden">
-                    <div className="aspect-video relative">
+                    <div className="aspect-[2/3] relative">
                       <Image
-                        src={item.thumbnail || "/placeholder.svg"}
+                        src={item.poster || item.thumbnail || "/placeholder.svg?height=600&width=400"}
                         alt={item.title}
                         fill
                         className="object-cover transition-transform duration-300 group-hover:scale-105"

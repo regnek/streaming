@@ -29,9 +29,21 @@ export function FeaturedContent({ content }: FeaturedContentProps) {
         <div className="absolute inset-0 bg-gradient-to-r from-black/90 via-black/40 to-transparent" />
       </div>
 
+      {/* Poster overlay */}
+      <div className="absolute left-4 md:left-16 bottom-16 hidden md:block">
+        <div className="relative h-64 w-44 rounded-lg overflow-hidden shadow-2xl">
+          <Image
+            src={content.poster || content.thumbnail || "/placeholder.svg"}
+            alt={content.title}
+            fill
+            className="object-cover"
+          />
+        </div>
+      </div>
+
       {/* Content */}
       <div className="relative h-full container mx-auto px-4 flex flex-col justify-center">
-        <div className="max-w-2xl pt-20">
+        <div className="max-w-2xl pt-20 md:ml-64">
           <h1 className="text-4xl md:text-6xl font-bold mb-4">{content.title}</h1>
 
           <div className="flex items-center text-sm text-gray-300 mb-4">

@@ -8,6 +8,7 @@ interface ContentItem {
   id: string
   title: string
   thumbnail: string
+  poster: string
   releaseYear?: string
   duration?: string
   progress?: number
@@ -25,9 +26,9 @@ export function ContentGrid({ items }: ContentGridProps) {
       {items && items.length > 0 ? (
         items.map((item) => (
           <div key={item.id || `item-${Math.random()}`} className="flex flex-col group">
-            <div className="relative aspect-video rounded-md overflow-hidden">
+            <div className="relative aspect-[2/3] rounded-md overflow-hidden">
               <Image
-                src={item.thumbnail || "/placeholder.svg"}
+                src={item.poster || item.thumbnail || "/placeholder.svg?height=600&width=400"}
                 alt={item.title || "Content item"}
                 fill
                 className="object-cover transition-transform duration-300 group-hover:scale-105"
