@@ -50,9 +50,9 @@ export function ContentRow({ title, seeAllLink, items }: ContentRowProps) {
     <div className="relative">
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-xl font-semibold">{title}</h2>
-        <Link href={seeAllLink} className="text-sm text-gray-400 hover:text-white">
-          See All
-        </Link>
+          <Button variant="ghost" size="sm" className="flex items-center gap-1">
+            See all <ChevronRight className="w-4 h-4" />
+          </Button>
       </div>
 
       <div className="relative group">

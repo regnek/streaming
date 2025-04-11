@@ -15,7 +15,7 @@ export function FeaturedContent({ content }: FeaturedContentProps) {
   }
 
   return (
-    <div className="relative w-full h-[70vh] overflow-hidden">
+    <div className="relative w-full h-[85vh] overflow-hidden">
       {/* Background image */}
       <div className="absolute inset-0">
         <Image
@@ -43,10 +43,10 @@ export function FeaturedContent({ content }: FeaturedContentProps) {
 
       {/* Content */}
       <div className="relative h-full container mx-auto px-4 flex flex-col justify-center">
-        <div className="max-w-2xl pt-20">
+        <div className="max-w-2xl pt-[8rem]">
           <h1 className="text-4xl md:text-6xl font-bold mb-4">{content.title}</h1>
 
-          <div className="flex items-center text-sm text-gray-300 mb-4">
+          {/* <div className="flex items-center text-sm text-gray-300 mb-4">
             <span>{content.releaseYear}</span>
             <span className="mx-2">•</span>
             <span>{content.rating}</span>
@@ -61,7 +61,7 @@ export function FeaturedContent({ content }: FeaturedContentProps) {
                 </span>
               </>
             )}
-          </div>
+          </div> */}
 
           <p className="text-lg text-gray-200 mb-6 line-clamp-3">{content.description}</p>
 
@@ -79,6 +79,9 @@ export function FeaturedContent({ content }: FeaturedContentProps) {
               </Link>
             </Button>
           </div>
+        </div>
+        <div className="absolute">
+          <span className="text-lg">{content.rating}</span>
         </div>
       </div>
     </div>
