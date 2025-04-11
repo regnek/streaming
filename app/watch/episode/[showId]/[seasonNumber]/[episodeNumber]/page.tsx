@@ -137,15 +137,6 @@ export default function EpisodeWatchPage() {
               </Button>
             )}
 
-            <Button
-              variant="outline"
-              onClick={() => setShowEpisodeList(!showEpisodeList)}
-              className="flex items-center gap-1"
-            >
-              <ListVideo className="w-4 h-4" />
-              {showEpisodeList ? "Hide Episodes" : "Show Episodes"}
-            </Button>
-
             {nextEpisode && (
               <Button
                 variant="outline"
@@ -168,7 +159,17 @@ export default function EpisodeWatchPage() {
 
         {showEpisodeList && (
           <div className="mb-8">
-            <h2 className="text-xl font-semibold mb-4">Season {seasonNumber} Episodes</h2>
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+              <h2 className="text-xl font-semibold mb-4">Season {seasonNumber} Episodes</h2>
+              <Button
+                variant="outline"
+                onClick={() => setShowEpisodeList(!showEpisodeList)}
+                className="flex items-center gap-1"
+              >
+                <ListVideo className="w-4 h-4" />
+                {showEpisodeList ? "Hide Episodes" : "Show Episodes"}
+              </Button>
+            </div>
             <div className="bg-gray-900/30 border border-gray-800 rounded-lg p-4">
               <EpisodeList
                 episodes={seasonEpisodes}
