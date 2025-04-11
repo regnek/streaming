@@ -86,7 +86,7 @@ export default function Home() {
     <div className="min-h-screen bg-black text-white">
       {featuredContent && <FeaturedContent content={featuredContent} />}
 
-      <div className="container px-4 py-8 mx-auto space-y-8">
+      <div className="container px-4 4 mx-auto space-y-8">
         <ContinueWatchingRow />
 
         <ContentRow title="Trending Now" seeAllLink="/trending" items={trendingContent} />
