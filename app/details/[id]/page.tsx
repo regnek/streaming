@@ -194,7 +194,7 @@ export default function DetailsPage() {
   return (
     <div className="min-h-screen bg-black">
       {/* Hero section with backdrop */}
-      <div className="relative w-full h-[50vh] md:h-[75vh] overflow-hidden">
+      <div className="relative w-full h-[50vh] md:h-[85vh] overflow-hidden">
         <Image
           src={details.thumbnail || "/placeholder.svg"}
           alt={details.title}
@@ -205,15 +205,17 @@ export default function DetailsPage() {
         <div className="absolute inset-0 bg-gradient-to-t from-black via-black/80 to-transparent" />
 
         {/* Back button */}
-        <Button
-          variant="ghost"
-          size="icon"
-          className="absolute top-20 left-4 z-10 rounded-full bg-black/50"
-          onClick={() => router.back()}
-        >
-          <ChevronLeft className="w-5 h-5" />
-          <span className="sr-only">Back</span>
-        </Button>
+        <div className="relatiive container mx-auto">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="absolute top-20 left-4 z-10 rounded-full bg-black/50"
+            onClick={() => router.back()}
+          >
+            <ChevronLeft className="w-5 h-5" />
+            <span className="sr-only">Back</span>
+          </Button>
+        </div>
       </div>
 
       <div className="container mx-auto px-4 -mt-32 relative z-10">
@@ -304,8 +306,8 @@ export default function DetailsPage() {
               <div className="flex flex-wrap gap-3 mt-6 justify-center lg:justify-start">
                 <Button asChild className="flex items-center gap-2">
                   <Link href={`/watch/${details.id}`}>
-                    <Play className="w-4 h-4" />
-                    Watch Now
+                    <Play fill="#171717" className="w-4 h-4" />
+                    Play
                   </Link>
                 </Button>
 
@@ -313,7 +315,7 @@ export default function DetailsPage() {
                   <Button variant="outline" className="flex items-center gap-2" asChild>
                     <Link href={`/tv-show/${details.id}/seasons`}>
                       <List className="w-4 h-4" />
-                      View Episodes
+                      View episodes
                     </Link>
                   </Button>
                 )}
