@@ -261,7 +261,7 @@ export default function DetailsPage() {
 
           {/* Right column - Details */}
           <div className="lg:col-span-2">
-            <div className="relative -top-[8rem]">
+            <div className="relative -top-[8rem] -mt-20">
               <h1 className="text-3xl md:text-4xl font-bold mb-2">{details.title}</h1>
 
               <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-gray-300 mb-4">
@@ -301,7 +301,7 @@ export default function DetailsPage() {
                   ))}
               </div>
 
-              <p className="text-gray-300 mb-8">{details.description}</p>
+              <p className="text-gray-300 mb-8 max-w-2xl">{details.description}</p>
 
               <div className="flex flex-wrap gap-3 mt-6 justify-center lg:justify-start">
                 <Button asChild className="flex items-center gap-2">
