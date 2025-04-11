@@ -43,8 +43,8 @@ export function FeaturedContent({ content }: FeaturedContentProps) {
 
       {/* Content */}
       <div className="relative h-full container mx-auto px-4 flex flex-col justify-center">
-        <div className="max-w-2xl pt-[30vh]">
-          <h1 className="text-4xl md:text-6xl font-bold mb-4">{content.title}</h1>
+        <div className="pt-[30vh]">
+          <h1 className="text-4xl md:text-6xl font-bold mb-4 max-w-2xl">{content.title}</h1>
 
           {/* <div className="flex items-center text-sm text-gray-300 mb-4">
             <span>{content.releaseYear}</span>
@@ -63,25 +63,27 @@ export function FeaturedContent({ content }: FeaturedContentProps) {
             )}
           </div> */}
 
-          <p className="text-lg text-gray-200 mb-6 line-clamp-3">{content.description}</p>
+          <p className="text-lg text-gray-200 mb-6 line-clamp-3 max-w-2xl">{content.description}</p>
 
-          <div className="flex flex-wrap gap-4">
-            <Button asChild size="lg" className="gap-2">
-              <Link href={`/watch/${content.id}`}>
-                <Play fill="#171717" className="w-5 h-5" />
-                Play
-              </Link>
-            </Button>
-            <Button asChild variant="outline" size="lg" className="gap-2">
-              <Link href={`/details/${content.id}`}>
-                {/* <Info className="w-5 h-5" /> */}
-                More info
-              </Link>
-            </Button>
-          </div>
+          <div className="flex justify-between items-center">
+            <div className="flex gap-4">
+              <Button asChild size="lg" className="gap-2">
+                <Link href={`/watch/${content.id}`}>
+                  <Play fill="#171717" className="w-5 h-5" />
+                  Play
+                </Link>
+              </Button>
+              <Button asChild variant="outline" size="lg" className="gap-2">
+                <Link href={`/details/${content.id}`}>
+                  {/* <Info className="w-5 h-5" /> */}
+                  More info
+                </Link>
+              </Button>
+            </div>
+            <div>
+              <span className="text-lg">{content.rating}</span>
+            </div>
 
-          <div className="absolute right-0 bottom-1">
-            <span className="text-lg">{content.rating}</span>
           </div>
         </div>
       </div>
