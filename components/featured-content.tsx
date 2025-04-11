@@ -30,7 +30,7 @@ export function FeaturedContent({ content }: FeaturedContentProps) {
       </div>
 
       {/* Poster overlay */}
-      <div className="absolute left-4 md:left-16 bottom-16 hidden md:block">
+      {/* <div className="absolute left-4 md:left-16 bottom-16 hidden md:block">
         <div className="relative h-64 w-44 rounded-lg overflow-hidden shadow-2xl">
           <Image
             src={content.poster || content.thumbnail || "/placeholder.svg"}
@@ -39,11 +39,11 @@ export function FeaturedContent({ content }: FeaturedContentProps) {
             className="object-cover"
           />
         </div>
-      </div>
+      </div> */}
 
       {/* Content */}
       <div className="relative h-full container mx-auto px-4 flex flex-col justify-center">
-        <div className="max-w-2xl pt-20 md:ml-64">
+        <div className="max-w-2xl pt-20">
           <h1 className="text-4xl md:text-6xl font-bold mb-4">{content.title}</h1>
 
           <div className="flex items-center text-sm text-gray-300 mb-4">
@@ -68,14 +68,14 @@ export function FeaturedContent({ content }: FeaturedContentProps) {
           <div className="flex flex-wrap gap-4">
             <Button asChild size="lg" className="gap-2">
               <Link href={`/watch/${content.id}`}>
-                <Play className="w-5 h-5" />
+                <Play fill="#171717" className="w-5 h-5" />
                 Play
               </Link>
             </Button>
             <Button asChild variant="outline" size="lg" className="gap-2">
               <Link href={`/details/${content.id}`}>
-                <Info className="w-5 h-5" />
-                More Info
+                {/* <Info className="w-5 h-5" /> */}
+                More info
               </Link>
             </Button>
           </div>
