@@ -4,7 +4,7 @@ export function Footer() {
   return (
     <footer className="bg-black border-t border-gray-800">
       <div className="container mx-auto px-4 py-8">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+        {/* <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
           <div>
             <h3 className="text-sm font-semibold mb-4">Company</h3>
             <ul className="space-y-2 text-sm text-gray-400">
@@ -108,10 +108,10 @@ export function Footer() {
               </li>
             </ul>
           </div>
-        </div>
+        </div> */}
 
         <div className="mt-8 pt-8 border-t border-gray-800 text-sm text-gray-400 text-center">
-          <p>&copy; {new Date().getFullYear()} StreamFlix. All rights reserved.</p>
+          <p>&copy; {new Date().getFullYear()} Kenger Film Library. All rights reserved.</p>
         </div>
       </div>
     </footer>
