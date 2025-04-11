@@ -71,8 +71,8 @@ export function ContentRow({ title, seeAllLink, items }: ContentRowProps) {
         <div ref={rowRef} className="flex gap-4 overflow-x-auto scrollbar-hide pb-4 -mx-4 px-4" onScroll={handleScroll}>
           {items.map((item) => (
             <Link href={`/details/${item.id}`}>
-              <div key={item.id} className="flex-none w-[180px]">
-                <div className="relative aspect-[2/3] group/item rounded-md overflow-hidden">
+              <div key={item.id} className="flex-none w-[220px]">
+                <div className="relative aspect-[2/3] group/item rounded-sm overflow-hidden">
                   <Image
                     src={item.poster || item.thumbnail || "/placeholder.svg?height=600&width=400"}
                     alt={item.title}
