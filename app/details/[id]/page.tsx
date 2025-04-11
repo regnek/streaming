@@ -205,7 +205,7 @@ export default function DetailsPage() {
         <div className="absolute inset-0 bg-gradient-to-t from-black via-black/80 to-transparent" />
 
         {/* Back button */}
-        <div className="relatiive container mx-auto">
+        <div className="relative container mx-auto">
           <Button
             variant="ghost"
             size="icon"

@@ -100,7 +100,7 @@ export default function EpisodeWatchPage() {
 
   return (
     <div className="min-h-screen bg-black">
-      <div className="relative">
+      <div className="relative h-[100vh]">
         {/* Back button */}
         <Button
           variant="ghost"
@@ -133,7 +133,7 @@ export default function EpisodeWatchPage() {
                 className="flex items-center gap-1"
               >
                 <ChevronLeft className="w-4 h-4" />
-                Previous
+                Previous episode
               </Button>
             )}
 
@@ -143,7 +143,7 @@ export default function EpisodeWatchPage() {
                 onClick={() => navigateToEpisode(showId, nextEpisode.seasonNumber, nextEpisode.episodeNumber)}
                 className="flex items-center gap-1"
               >
-                Next
+                Next episode
                 <ChevronRight className="w-4 h-4" />
               </Button>
             )}
