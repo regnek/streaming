@@ -167,7 +167,7 @@ export default function EpisodeWatchPage() {
                 className="flex items-center gap-1"
               >
                 <ListVideo className="w-4 h-4" />
-                {showEpisodeList ? "Show episodes" : "Hide episodes"}
+                {showEpisodeList ? "Hide episodes" : "Show episodes"}
               </Button>
             </div>
             {showEpisodeList && (
