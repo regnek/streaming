@@ -18,6 +18,7 @@ import {
   ChevronRight,
   ChevronLeft,
   RefreshCcw,
+  List,
 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
@@ -231,6 +232,15 @@ export default function DetailsPage() {
                 </Link>
               </Button>
 
+              {details.category === "tv-show" && (
+                <Button variant="outline" className="flex items-center gap-2" asChild>
+                  <Link href={`/tv-show/${details.id}/seasons`}>
+                    <List className="w-4 h-4" />
+                    View Episodes
+                  </Link>
+                </Button>
+              )}
+
               <Button variant="outline" className="flex items-center gap-2" onClick={handleWatchlistToggle}>
                 {isInUserWatchlist ? (
                   <>
@@ -411,7 +421,12 @@ export default function DetailsPage() {
               {details.category === "tv-show" && details.seasons && details.seasons.length > 0 && (
                 <TabsContent value="episodes">
                   <div className="space-y-6">
-                    <h3 className="text-lg font-medium mb-3">Seasons</h3>
+                    <div className="flex justify-between items-center">
+                      <h3 className="text-lg font-medium mb-3">Seasons</h3>
+                      <Button asChild variant="outline" size="sm">
+                        <Link href={`/tv-show/${details.id}/seasons`}>View All Episodes</Link>
+                      </Button>
+                    </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       {details.seasons.map((season: any) => (
                         <div key={season.id} className="border border-gray-800 rounded-lg overflow-hidden">
@@ -434,6 +449,11 @@ export default function DetailsPage() {
                               <p className="text-sm text-gray-300 line-clamp-3">
                                 {season.overview || "No overview available."}
                               </p>
+                              <Button asChild size="sm" className="mt-2">
+                                <Link href={`/tv-show/${details.id}/seasons?season=${season.seasonNumber}`}>
+                                  View Episodes
+                                </Link>
+                              </Button>
                             </div>
                           </div>
                         </div>

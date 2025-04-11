@@ -258,3 +258,48 @@ export function adaptTVShowDetails(tmdbShow: any): any {
 
   return show
 }
+
+// Convert TMDB TV show season to our app's format
+export function adaptTVShowSeason(tmdbSeason: any, showId: string): any {
+  if (!tmdbSeason) return null
+
+  return {
+    id: `season-${showId}-${tmdbSeason.season_number}`,
+    tmdbId: tmdbSeason.id,
+    showId: showId,
+    name: tmdbSeason.name,
+    overview: tmdbSeason.overview,
+    seasonNumber: tmdbSeason.season_number,
+    episodeCount: tmdbSeason.episodes?.length || tmdbSeason.episode_count || 0,
+    airDate: tmdbSeason.air_date,
+    poster: getImageUrl(tmdbSeason.poster_path, POSTER_SIZES.medium),
+    episodes: tmdbSeason.episodes
+      ? tmdbSeason.episodes.map((episode: any) => adaptTVShowEpisode(episode, showId, tmdbSeason.season_number))
+      : [],
+  }
+}
+
+// Convert TMDB TV show episode to our app's format
+export function adaptTVShowEpisode(tmdbEpisode: any, showId: string, seasonNumber: number): any {
+  if (!tmdbEpisode) return null
+
+  return {
+    id: `episode-${showId}-${seasonNumber}-${tmdbEpisode.episode_number}`,
+    tmdbId: tmdbEpisode.id,
+    showId: showId,
+    seasonId: `season-${showId}-${seasonNumber}`,
+    title: tmdbEpisode.name,
+    description: tmdbEpisode.overview,
+    seasonNumber: seasonNumber,
+    episodeNumber: tmdbEpisode.episode_number,
+    airDate: tmdbEpisode.air_date,
+    runtime: tmdbEpisode.runtime,
+    stillImage: getImageUrl(tmdbEpisode.still_path, BACKDROP_SIZES.medium),
+    voteAverage: tmdbEpisode.vote_average,
+    voteCount: tmdbEpisode.vote_count,
+    crew: tmdbEpisode.crew ? tmdbEpisode.crew.map(adaptPerson) : [],
+    guestStars: tmdbEpisode.guest_stars ? tmdbEpisode.guest_stars.map(adaptPerson) : [],
+    // For demo purposes, we'll use a sample video URL
+    videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
+  }
+}

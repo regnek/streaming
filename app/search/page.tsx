@@ -4,7 +4,7 @@ import type React from "react"
 
 import { useState, useEffect, useRef } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
-import { Search } from "lucide-react"
+import { Search, X } from "lucide-react"
 
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
@@ -20,12 +20,22 @@ export default function SearchPage() {
   const [results, setResults] = useState<any[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [searchTimeout, setSearchTimeout] = useState<NodeJS.Timeout | null>(null)
+  const [previousPage, setPreviousPage] = useState<string | null>(null)
+  const [shouldFocusAfterNavigation, setShouldFocusAfterNavigation] = useState(false)
 
   // Reference to the search input
   const searchInputRef = useRef<HTMLInputElement>(null)
 
   // Track if the input has been focused
   const [hasBeenFocused, setHasBeenFocused] = useState(false)
+
+  // Store the previous page from localStorage when component mounts
+  useEffect(() => {
+    const storedPreviousPage = localStorage.getItem("previousPage")
+    if (storedPreviousPage) {
+      setPreviousPage(storedPreviousPage)
+    }
+  }, [])
 
   // Function to perform the search
   const performSearch = async (searchQuery: string) => {
@@ -59,6 +69,21 @@ export default function SearchPage() {
     }
   }, [initialQuery])
 
+  // Focus input after navigation if needed
+  useEffect(() => {
+    if (shouldFocusAfterNavigation) {
+      // Use a longer timeout to ensure the DOM has updated after navigation
+      const focusTimer = setTimeout(() => {
+        if (searchInputRef.current) {
+          searchInputRef.current.focus()
+        }
+        setShouldFocusAfterNavigation(false)
+      }, 150)
+
+      return () => clearTimeout(focusTimer)
+    }
+  }, [shouldFocusAfterNavigation])
+
   // Handle search input with debouncing
   const handleSearchInput = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newQuery = e.target.value
@@ -68,6 +93,18 @@ export default function SearchPage() {
     // Clear any existing timeout
     if (searchTimeout) {
       clearTimeout(searchTimeout)
+    }
+
+    // If search is cleared, navigate back to previous page
+    if (!newQuery.trim()) {
+      const timeout = setTimeout(() => {
+        const targetPage = previousPage || "/"
+        setShouldFocusAfterNavigation(true)
+        router.push(targetPage)
+      }, 300) // Short delay to prevent accidental navigation
+
+      setSearchTimeout(timeout)
+      return
     }
 
     // Set a new timeout for 500ms
@@ -94,6 +131,16 @@ export default function SearchPage() {
     }, 500)
 
     setSearchTimeout(timeout)
+  }
+
+  // Handle clear search button
+  const handleClearSearch = () => {
+    setQuery("")
+
+    // Navigate back to previous page
+    const targetPage = previousPage || "/"
+    setShouldFocusAfterNavigation(true)
+    router.push(targetPage)
   }
 
   // Maintain focus after component updates if the input has been focused before
@@ -126,8 +173,21 @@ export default function SearchPage() {
               value={query}
               onChange={handleSearchInput}
               onFocus={() => setHasBeenFocused(true)}
-              className="bg-gray-900 border-gray-700 w-full"
+              className="bg-gray-900 border-gray-700 w-full pr-16"
+              data-testid="search-page-input"
             />
+            {query ? (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="absolute right-8 top-0 h-full"
+                onClick={handleClearSearch}
+                data-testid="search-page-clear-button"
+              >
+                <X className="w-4 h-4" />
+                <span className="sr-only">Clear search</span>
+              </Button>
+            ) : null}
             <Button variant="ghost" size="icon" className="absolute right-0 top-0 h-full">
               <Search className="w-4 h-4" />
               <span className="sr-only">Search</span>

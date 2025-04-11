@@ -5,14 +5,18 @@ import { Play, Pause, Volume2, VolumeX, Maximize2, Minimize2, SkipBack, SkipForw
 
 import { Button } from "@/components/ui/button"
 import { Slider } from "@/components/ui/slider"
+import { updateVideoProgress, getVideoProgress } from "@/lib/progress-service"
 
 interface VideoPlayerProps {
   src: string
   poster?: string
   title: string
+  videoId?: string
+  onNext?: () => void
+  onPrevious?: () => void
 }
 
-export function VideoPlayer({ src, poster, title }: VideoPlayerProps) {
+export function VideoPlayer({ src, poster, title, videoId, onNext, onPrevious }: VideoPlayerProps) {
   const videoRef = useRef<HTMLVideoElement>(null)
   const playerRef = useRef<HTMLDivElement>(null)
   const [isPlaying, setIsPlaying] = useState(false)
@@ -89,12 +93,23 @@ export function VideoPlayer({ src, poster, title }: VideoPlayerProps) {
       setIsBuffering(false)
     }
 
+    const handleEnded = () => {
+      setIsPlaying(false)
+      if (onNext) {
+        // Auto-play next episode after a short delay
+        setTimeout(() => {
+          onNext()
+        }, 1500)
+      }
+    }
+
     video.addEventListener("timeupdate", handleTimeUpdate)
     video.addEventListener("durationchange", handleDurationChange)
     video.addEventListener("play", handlePlay)
     video.addEventListener("pause", handlePause)
     video.addEventListener("waiting", handleWaiting)
     video.addEventListener("playing", handlePlaying)
+    video.addEventListener("ended", handleEnded)
 
     return () => {
       video.removeEventListener("timeupdate", handleTimeUpdate)
@@ -103,8 +118,9 @@ export function VideoPlayer({ src, poster, title }: VideoPlayerProps) {
       video.removeEventListener("pause", handlePause)
       video.removeEventListener("waiting", handleWaiting)
       video.removeEventListener("playing", handlePlaying)
+      video.removeEventListener("ended", handleEnded)
     }
-  }, [])
+  }, [onNext])
 
   // Handle fullscreen changes
   useEffect(() => {
@@ -118,6 +134,57 @@ export function VideoPlayer({ src, poster, title }: VideoPlayerProps) {
       document.removeEventListener("fullscreenchange", handleFullscreenChange)
     }
   }, [])
+
+  // Add this useEffect to load saved progress
+  useEffect(() => {
+    const video = videoRef.current
+    if (!video || !videoId) return
+
+    const savedProgress = getVideoProgress(videoId)
+    if (savedProgress && savedProgress.position > 0) {
+      // Only seek if we're not near the end (to avoid skipping to the end of completed videos)
+      if (savedProgress.percent < 95) {
+        video.currentTime = savedProgress.position
+      }
+    }
+  }, [videoId])
+
+  // Add this function to save progress periodically
+  useEffect(() => {
+    const video = videoRef.current
+    if (!video || !videoId) return
+
+    // Save progress every 5 seconds while playing
+    const progressInterval = setInterval(() => {
+      if (!isPlaying) return
+
+      updateVideoProgress(videoId, video.currentTime, video.duration || 0)
+    }, 5000)
+
+    // Save progress when video ends
+    const handleEnded = () => {
+      updateVideoProgress(videoId, video.duration || 0, video.duration || 0)
+    }
+
+    // Save progress when component unmounts or video changes
+    const handleUnload = () => {
+      updateVideoProgress(videoId, video.currentTime, video.duration || 0)
+    }
+
+    video.addEventListener("ended", handleEnded)
+    window.addEventListener("beforeunload", handleUnload)
+
+    return () => {
+      clearInterval(progressInterval)
+      video.removeEventListener("ended", handleEnded)
+      window.removeEventListener("beforeunload", handleUnload)
+
+      // Save progress when component unmounts
+      if (video.currentTime > 0 && video.duration) {
+        updateVideoProgress(videoId, video.currentTime, video.duration)
+      }
+    }
+  }, [videoId, isPlaying])
 
   const togglePlay = () => {
     const video = videoRef.current
@@ -300,6 +367,20 @@ export function VideoPlayer({ src, poster, title }: VideoPlayerProps) {
             </div>
 
             <div className="flex items-center gap-2">
+              {onPrevious && (
+                <Button variant="ghost" size="icon" className="text-white hover:bg-white/10" onClick={onPrevious}>
+                  <SkipBack className="w-5 h-5" />
+                  <span className="sr-only">Previous Episode</span>
+                </Button>
+              )}
+
+              {onNext && (
+                <Button variant="ghost" size="icon" className="text-white hover:bg-white/10" onClick={onNext}>
+                  <SkipForward className="w-5 h-5" />
+                  <span className="sr-only">Next Episode</span>
+                </Button>
+              )}
+
               <Button variant="ghost" size="icon" className="text-white hover:bg-white/10">
                 <Settings className="w-5 h-5" />
                 <span className="sr-only">Settings</span>

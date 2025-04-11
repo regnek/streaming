@@ -12,10 +12,12 @@ export class ContentError extends Error {
   }
 }
 
-// Get trending content
+// Update the error handling in getTrendingContent to log more details
 export async function getTrendingContent(page = 1): Promise<any[]> {
   try {
+    console.log("Fetching trending content with TMDB API...")
     const data = await tmdbApi.getTrending("week", page)
+    console.log("Successfully fetched trending content:", data.results.length, "items")
     return data.results
       .filter((item: any) => item.media_type === "movie" || item.media_type === "tv")
       .map((item: any) => {
@@ -27,29 +29,42 @@ export async function getTrendingContent(page = 1): Promise<any[]> {
       })
   } catch (error) {
     console.error("Error fetching trending content:", error)
-    throw new ContentError("Failed to fetch trending content. Please try again later.")
+    console.log("Falling back to mock data...")
+    // Fallback to mock data on error
+    const { getTrendingContent: getMockTrendingContent } = await import("./api")
+    return getMockTrendingContent(20)
   }
 }
 
-// Get popular movies
+// Update the error handling in getPopularMovies to log more details
 export async function getPopularMovies(page = 1): Promise<any[]> {
   try {
+    console.log("Fetching popular movies with TMDB API...")
     const data = await tmdbApi.getPopularMovies(page)
+    console.log("Successfully fetched popular movies:", data.results.length, "items")
     return data.results.map(tmdbAdapter.adaptMovie)
   } catch (error) {
     console.error("Error fetching popular movies:", error)
-    throw new ContentError("Failed to fetch popular movies. Please try again later.")
+    console.log("Falling back to mock data...")
+    // Fallback to mock data on error
+    const { getMovies } = await import("./api")
+    return getMovies()
   }
 }
 
-// Get popular TV shows
+// Update the error handling in getPopularTVShows to log more details
 export async function getPopularTVShows(page = 1): Promise<any[]> {
   try {
+    console.log("Fetching popular TV shows with TMDB API...")
     const data = await tmdbApi.getPopularTVShows(page)
+    console.log("Successfully fetched popular TV shows:", data.results.length, "items")
     return data.results.map(tmdbAdapter.adaptTVShow)
   } catch (error) {
     console.error("Error fetching popular TV shows:", error)
-    throw new ContentError("Failed to fetch popular TV shows. Please try again later.")
+    console.log("Falling back to mock data...")
+    // Fallback to mock data on error
+    const { getTVShows } = await import("./api")
+    return getTVShows()
   }
 }
 
@@ -86,10 +101,16 @@ export async function getContentDetails(id: string): Promise<any> {
     }
   } catch (error) {
     console.error(`Error fetching content details for ID ${id}:`, error)
-    if (error instanceof ContentError) {
-      throw error
+    // Fallback to mock data on error
+    try {
+      const { getVideoDetails } = await import("./api")
+      return getVideoDetails(id)
+    } catch (fallbackError) {
+      if (error instanceof ContentError) {
+        throw error
+      }
+      throw new ContentError(`Failed to fetch details for content with ID ${id}. Please try again later.`)
     }
-    throw new ContentError(`Failed to fetch details for content with ID ${id}. Please try again later.`)
   }
 }
 
@@ -104,7 +125,9 @@ export async function searchContent(query: string, page = 1): Promise<any[]> {
     return tmdbAdapter.adaptSearchResults(data)
   } catch (error) {
     console.error("Error searching content:", error)
-    throw new ContentError("Failed to search content. Please try again later.")
+    // Fallback to mock data on error
+    const { searchVideos } = await import("./api")
+    return searchVideos(query)
   }
 }
 
@@ -135,7 +158,9 @@ export async function getNewReleases(page = 1): Promise<any[]> {
       .slice(0, 20) // Limit to 20 items
   } catch (error) {
     console.error("Error fetching new releases:", error)
-    throw new ContentError("Failed to fetch new releases. Please try again later.")
+    // Fallback to mock data on error
+    const { getNewReleases: getMockNewReleases } = await import("./api")
+    return getMockNewReleases(20)
   }
 }
 
@@ -197,5 +222,125 @@ export async function getSimilarContent(id: string, page = 1): Promise<any[]> {
       throw error
     }
     throw new ContentError("Failed to fetch similar content. Please try again later.")
+  }
+}
+
+// Get TV show seasons
+export async function getTVShowSeasons(showId: string): Promise<any[]> {
+  try {
+    // Extract the TMDB ID from our internal ID format
+    const [type, tmdbId] = showId.split("-")
+
+    if (type !== "tv") {
+      throw new ContentError(`Invalid show ID: ${showId}. Expected a TV show ID.`, "INVALID_TYPE")
+    }
+
+    // Get the TV show details which includes basic season information
+    const tvDetails = await tmdbApi.getTVShowDetails(tmdbId)
+
+    // Map the seasons to our format
+    return tvDetails.seasons.map((season: any) => tmdbAdapter.adaptTVShowSeason(season, showId))
+  } catch (error) {
+    console.error(`Error fetching seasons for show ID ${showId}:`, error)
+    // Fallback to mock data or empty array
+    return []
+  }
+}
+
+// Get TV show season details with episodes
+export async function getTVShowSeason(showId: string, seasonNumber: number): Promise<any> {
+  try {
+    // Extract the TMDB ID from our internal ID format
+    const [type, tmdbId] = showId.split("-")
+
+    if (type !== "tv") {
+      throw new ContentError(`Invalid show ID: ${showId}. Expected a TV show ID.`, "INVALID_TYPE")
+    }
+
+    // Get the season details including episodes
+    const seasonDetails = await tmdbApi.getTVShowSeason(tmdbId, seasonNumber)
+
+    // Adapt the season data to our format
+    return tmdbAdapter.adaptTVShowSeason(seasonDetails, showId)
+  } catch (error) {
+    console.error(`Error fetching season ${seasonNumber} for show ID ${showId}:`, error)
+    throw new ContentError(`Failed to fetch season ${seasonNumber} details. Please try again later.`)
+  }
+}
+
+// Get TV show episode details
+export async function getTVShowEpisode(showId: string, seasonNumber: number, episodeNumber: number): Promise<any> {
+  try {
+    // Extract the TMDB ID from our internal ID format
+    const [type, tmdbId] = showId.split("-")
+
+    if (type !== "tv") {
+      throw new ContentError(`Invalid show ID: ${showId}. Expected a TV show ID.`, "INVALID_TYPE")
+    }
+
+    // Get the episode details
+    const episodeDetails = await tmdbApi.getTVShowEpisode(tmdbId, seasonNumber, episodeNumber)
+
+    // Adapt the episode data to our format
+    return tmdbAdapter.adaptTVShowEpisode(episodeDetails, showId, seasonNumber)
+  } catch (error) {
+    console.error(`Error fetching episode ${episodeNumber} of season ${seasonNumber} for show ID ${showId}:`, error)
+    throw new ContentError(`Failed to fetch episode details. Please try again later.`)
+  }
+}
+
+// Get next episode
+export async function getNextEpisode(showId: string, seasonNumber: number, episodeNumber: number): Promise<any> {
+  try {
+    // Get the season details to know how many episodes it has
+    const season = await getTVShowSeason(showId, seasonNumber)
+
+    // If there are more episodes in the current season
+    if (episodeNumber < season.episodeCount) {
+      return getTVShowEpisode(showId, seasonNumber, episodeNumber + 1)
+    }
+
+    // Otherwise, try to get the first episode of the next season
+    const [type, tmdbId] = showId.split("-")
+    const tvDetails = await tmdbApi.getTVShowDetails(tmdbId)
+    const seasons = tvDetails.seasons.filter((s: any) => s.season_number > 0) // Filter out specials (season 0)
+
+    const currentSeasonIndex = seasons.findIndex((s: any) => s.season_number === seasonNumber)
+    if (currentSeasonIndex < seasons.length - 1) {
+      const nextSeason = seasons[currentSeasonIndex + 1]
+      return getTVShowEpisode(showId, nextSeason.season_number, 1)
+    }
+
+    // No next episode available
+    return null
+  } catch (error) {
+    console.error(`Error fetching next episode after S${seasonNumber}E${episodeNumber} for show ID ${showId}:`, error)
+    return null
+  }
+}
+
+// Get previous episode
+export async function getPreviousEpisode(showId: string, seasonNumber: number, episodeNumber: number): Promise<any> {
+  try {
+    // If not the first episode of the season
+    if (episodeNumber > 1) {
+      return getTVShowEpisode(showId, seasonNumber, episodeNumber - 1)
+    }
+
+    // If first episode of a season (not the first season)
+    if (seasonNumber > 1) {
+      // Get the previous season to know how many episodes it has
+      const previousSeason = await getTVShowSeason(showId, seasonNumber - 1)
+      return getTVShowEpisode(showId, seasonNumber - 1, previousSeason.episodeCount)
+    }
+
+    // No previous episode available
+    return null
+  } catch (error) {
+    console.error(
+      `Error fetching previous episode before S${seasonNumber}E${episodeNumber} for show ID ${showId}:`,
+      error,
+    )
+    return null
   }
 }

@@ -7,7 +7,9 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
 import { RefreshCcw } from "lucide-react"
 import { getTrendingContent, getPopularMovies, getPopularTVShows, getNewReleases } from "@/lib/content-service"
+import { ContinueWatchingRow } from "@/components/continue-watching-row"
 
+// Update the Home component to handle the API key setup
 export default function Home() {
   const [trendingContent, setTrendingContent] = useState<any[]>([])
   const [popularMovies, setPopularMovies] = useState<any[]>([])
@@ -18,6 +20,8 @@ export default function Home() {
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState("")
 
+  // Remove the ApiKeySetup component - it's no longer needed since we have a fallback API key
+
   useEffect(() => {
     fetchHomePageData()
   }, [])
@@ -27,6 +31,7 @@ export default function Home() {
     setError("")
 
     try {
+      console.log("Fetching home page data...")
       // Fetch all data in parallel
       const [trending, movies, tvShows, newContent] = await Promise.all([
         getTrendingContent(),
@@ -45,6 +50,7 @@ export default function Home() {
         const randomIndex = Math.floor(Math.random() * Math.min(5, trending.length))
         setFeaturedContent(trending[randomIndex])
       }
+      console.log("Home page data loaded successfully")
     } catch (error) {
       console.error("Failed to fetch home page data:", error)
       setError("Failed to load content. Please try again later.")
@@ -81,6 +87,8 @@ export default function Home() {
       {featuredContent && <FeaturedContent content={featuredContent} />}
 
       <div className="container px-4 py-8 mx-auto space-y-8">
+        <ContinueWatchingRow />
+
         <ContentRow title="Trending Now" seeAllLink="/trending" items={trendingContent} />
 
         <ContentRow title="Popular Movies" seeAllLink="/movies" items={popularMovies} />

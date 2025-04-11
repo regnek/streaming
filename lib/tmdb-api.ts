@@ -2,9 +2,15 @@
 // Documentation: https://developer.themoviedb.org/reference/intro/getting-started
 
 // API configuration
-const TMDB_API_KEY = process.env.NEXT_PUBLIC_TMDB_API_KEY || ""
+// Use the provided API key as a fallback if the environment variable is not set
+const TMDB_API_KEY = process.env.NEXT_PUBLIC_TMDB_API_KEY || "1375c768e61536be409ee6ade2f504b5"
 const TMDB_BASE_URL = "https://api.themoviedb.org/3"
 const TMDB_IMAGE_BASE_URL = "https://image.tmdb.org/t/p"
+
+// Log API key status (without revealing the actual key)
+console.log("TMDB API Key status:", TMDB_API_KEY ? "Available" : "Not available")
+console.log("Using environment variable:", !!process.env.NEXT_PUBLIC_TMDB_API_KEY)
+console.log("Using fallback API key:", !process.env.NEXT_PUBLIC_TMDB_API_KEY && !!TMDB_API_KEY)
 
 // Image sizes
 export const POSTER_SIZES = {
@@ -49,6 +55,7 @@ async function fetchWithCache(endpoint: string, params: Record<string, string> =
   })
 
   const url = `${TMDB_BASE_URL}${endpoint}?${queryParams.toString()}`
+  const maskedUrl = url.replace(TMDB_API_KEY, "API_KEY_HIDDEN")
 
   // Check if we have a cached response
   const cacheKey = url
@@ -60,21 +67,19 @@ async function fetchWithCache(endpoint: string, params: Record<string, string> =
   }
 
   // If no cache or cache expired, make the API request
-  console.log(`Fetching from API: ${endpoint}`)
+  console.log(`Fetching from API: ${maskedUrl}`)
 
   try {
-    if (!TMDB_API_KEY) {
-      throw new Error("TMDB API key is not configured")
-    }
-
     const response = await fetch(url)
 
     if (!response.ok) {
       const errorData = await response.json()
+      console.error(`API request failed with status ${response.status}:`, errorData)
       throw new Error(errorData.status_message || `API request failed with status ${response.status}`)
     }
 
     const data = await response.json()
+    console.log(`Successfully fetched data from ${endpoint}`)
 
     // Cache the response
     apiCache.set(cacheKey, { data, timestamp: Date.now() })
@@ -214,4 +219,24 @@ export async function getTVShowCredits(tvId: string): Promise<any> {
 // Get person details
 export async function getPersonDetails(personId: string): Promise<any> {
   return fetchWithCache(`/person/${personId}`, { append_to_response: "movie_credits,tv_credits,images" })
+}
+
+// Get TV show season details
+export async function getTVShowSeason(tvId: string, seasonNumber: number): Promise<any> {
+  return fetchWithCache(`/tv/${tvId}/season/${seasonNumber}`)
+}
+
+// Get TV show episode details
+export async function getTVShowEpisode(tvId: string, seasonNumber: number, episodeNumber: number): Promise<any> {
+  return fetchWithCache(`/tv/${tvId}/season/${seasonNumber}/episode/${episodeNumber}`)
+}
+
+// Get TV show episode videos (for trailers or clips)
+export async function getTVShowEpisodeVideos(tvId: string, seasonNumber: number, episodeNumber: number): Promise<any> {
+  return fetchWithCache(`/tv/${tvId}/season/${seasonNumber}/episode/${episodeNumber}/videos`)
+}
+
+// Get TV show episode images
+export async function getTVShowEpisodeImages(tvId: string, seasonNumber: number, episodeNumber: number): Promise<any> {
+  return fetchWithCache(`/tv/${tvId}/season/${seasonNumber}/episode/${episodeNumber}/images`)
 }

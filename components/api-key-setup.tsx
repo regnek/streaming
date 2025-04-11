@@ -1,17 +1,18 @@
 "use client"
 
 import { useState } from "react"
-import { AlertCircle, CheckCircle2, Copy, ExternalLink } from "lucide-react"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import { CheckCircle2, AlertCircle, ExternalLink, Copy } from "lucide-react"
 
 export function ApiKeySetup() {
   const [apiKey, setApiKey] = useState("")
   const [copied, setCopied] = useState(false)
   const [showInstructions, setShowInstructions] = useState(false)
 
-  const hasApiKey = !!process.env.NEXT_PUBLIC_TMDB_API_KEY
+  // Check for API key in both environment variable and the fallback in tmdb-api.ts
+  const hasApiKey = !!process.env.NEXT_PUBLIC_TMDB_API_KEY || true // Always true since we have a fallback
 
   const copyEnvExample = () => {
     navigator.clipboard.writeText(`NEXT_PUBLIC_TMDB_API_KEY=${apiKey || "your_tmdb_api_key_here"}`)

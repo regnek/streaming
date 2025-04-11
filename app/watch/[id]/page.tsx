@@ -23,6 +23,18 @@ export default function WatchPage() {
           // In a real app, this would fetch from an API
           const videoData = await getVideoById(params.id as string)
           setVideo(videoData)
+
+          // If this is a TV show, redirect to the first episode of the first season
+          if (videoData.category === "tv-show") {
+            // Get the first season number (usually 1, but could be different)
+            const firstSeasonNumber =
+              videoData.seasons && videoData.seasons.length > 0
+                ? videoData.seasons.find((s: any) => s.seasonNumber > 0)?.seasonNumber || 1
+                : 1
+
+            router.push(`/watch/episode/${params.id}/1/1`)
+            return
+          }
         } catch (error) {
           console.error("Failed to fetch video:", error)
         } finally {
@@ -32,7 +44,7 @@ export default function WatchPage() {
     }
 
     fetchVideo()
-  }, [params.id])
+  }, [params.id, router])
 
   if (isLoading) {
     return (

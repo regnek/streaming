@@ -787,14 +787,20 @@ export async function getTVShows(filters = {}): Promise<any[]> {
   // Simulate API delay
   await new Promise((resolve) => setTimeout(resolve, 500))
 
-  let filteredShows = mockVideos.filter((video) => video.category === "tv-show")
+  try {
+    let filteredShows = mockVideos.filter((video) => video.category === "tv-show")
 
-  // Apply filters if provided
-  if (Object.keys(filters).length > 0) {
-    filteredShows = applyFilters(filteredShows, filters)
+    // Apply filters if provided
+    if (Object.keys(filters).length > 0) {
+      filteredShows = applyFilters(filteredShows, filters)
+    }
+
+    return filteredShows
+  } catch (error) {
+    console.error("Error in getTVShows:", error)
+    // Return empty array instead of throwing to prevent chunk loading issues
+    return []
   }
-
-  return filteredShows
 }
 
 export async function getNewReleases(limit = 10): Promise<any[]> {
