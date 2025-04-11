@@ -259,77 +259,79 @@ export default function DetailsPage() {
 
           {/* Right column - Details */}
           <div className="lg:col-span-2">
-            <h1 className="text-3xl md:text-4xl font-bold mb-2">{details.title}</h1>
+            <div style="position:relative; top: -8rem">
+              <h1 className="text-3xl md:text-4xl font-bold mb-2">{details.title}</h1>
 
-            <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-gray-300 mb-4">
-              <div className="flex items-center">
-                <Star className="w-4 h-4 text-yellow-400 mr-1" />
-                <span>{details.userRating?.toFixed(1) || "N/A"}</span>
-                {details.voteCount && <span className="text-xs text-gray-500 ml-1">({details.voteCount})</span>}
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-gray-300 mb-4">
+                <div className="flex items-center">
+                  <Star className="w-4 h-4 text-yellow-400 mr-1" />
+                  <span>{details.userRating?.toFixed(1) || "N/A"}</span>
+                  {details.voteCount && <span className="text-xs text-gray-500 ml-1">({details.voteCount})</span>}
+                </div>
+
+                <div className="flex items-center">
+                  <Calendar className="w-4 h-4 text-gray-400 mr-1" />
+                  <span>{details.releaseDate || details.releaseYear}</span>
+                </div>
+
+                <div className="flex items-center">
+                  <Clock className="w-4 h-4 text-gray-400 mr-1" />
+                  <span>{details.duration}</span>
+                </div>
+
+                <div className="flex items-center">
+                  <Film className="w-4 h-4 text-gray-400 mr-1" />
+                  <span>{details.category === "movie" ? "Movie" : "TV Show"}</span>
+                </div>
+
+                <div className="flex items-center">
+                  <Award className="w-4 h-4 text-gray-400 mr-1" />
+                  <span>{details.rating}</span>
+                </div>
               </div>
 
-              <div className="flex items-center">
-                <Calendar className="w-4 h-4 text-gray-400 mr-1" />
-                <span>{details.releaseDate || details.releaseYear}</span>
+              <div className="flex flex-wrap gap-2 mb-6">
+                {details.genres &&
+                  details.genres.map((genre: string) => (
+                    <span key={genre} className="px-3 py-1 bg-gray-800 rounded-full text-sm">
+                      {genre}
+                    </span>
+                  ))}
               </div>
 
-              <div className="flex items-center">
-                <Clock className="w-4 h-4 text-gray-400 mr-1" />
-                <span>{details.duration}</span>
-              </div>
+              <p className="text-gray-300 mb-8">{details.description}</p>
 
-              <div className="flex items-center">
-                <Film className="w-4 h-4 text-gray-400 mr-1" />
-                <span>{details.category === "movie" ? "Movie" : "TV Show"}</span>
-              </div>
-
-              <div className="flex items-center">
-                <Award className="w-4 h-4 text-gray-400 mr-1" />
-                <span>{details.rating}</span>
-              </div>
-            </div>
-
-            <div className="flex flex-wrap gap-2 mb-6">
-              {details.genres &&
-                details.genres.map((genre: string) => (
-                  <span key={genre} className="px-3 py-1 bg-gray-800 rounded-full text-sm">
-                    {genre}
-                  </span>
-                ))}
-            </div>
-
-            <p className="text-gray-300 mb-8">{details.description}</p>
-
-            <div className="flex flex-wrap gap-3 mt-6 justify-center lg:justify-start">
-              <Button asChild className="flex items-center gap-2">
-                <Link href={`/watch/${details.id}`}>
-                  <Play className="w-4 h-4" />
-                  Watch Now
-                </Link>
-              </Button>
-
-              {details.category === "tv-show" && (
-                <Button variant="outline" className="flex items-center gap-2" asChild>
-                  <Link href={`/tv-show/${details.id}/seasons`}>
-                    <List className="w-4 h-4" />
-                    View Episodes
+              <div className="flex flex-wrap gap-3 mt-6 justify-center lg:justify-start">
+                <Button asChild className="flex items-center gap-2">
+                  <Link href={`/watch/${details.id}`}>
+                    <Play className="w-4 h-4" />
+                    Watch Now
                   </Link>
                 </Button>
-              )}
 
-              <Button variant="outline" className="flex items-center gap-2" onClick={handleWatchlistToggle}>
-                {isInUserWatchlist ? (
-                  <>
-                    <Check className="w-4 h-4" />
-                    In Watchlist
-                  </>
-                ) : (
-                  <>
-                    <Plus className="w-4 h-4" />
-                    Add to Watchlist
-                  </>
+                {details.category === "tv-show" && (
+                  <Button variant="outline" className="flex items-center gap-2" asChild>
+                    <Link href={`/tv-show/${details.id}/seasons`}>
+                      <List className="w-4 h-4" />
+                      View Episodes
+                    </Link>
+                  </Button>
                 )}
-              </Button>
+
+                <Button variant="outline" className="flex items-center gap-2" onClick={handleWatchlistToggle}>
+                  {isInUserWatchlist ? (
+                    <>
+                      <Check className="w-4 h-4" />
+                      In Watchlist
+                    </>
+                  ) : (
+                    <>
+                      <Plus className="w-4 h-4" />
+                      Add to Watchlist
+                    </>
+                  )}
+                </Button>
+              </div>
             </div>
 
             {details.trailerUrl && (
