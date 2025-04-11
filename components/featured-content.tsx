@@ -43,7 +43,7 @@ export function FeaturedContent({ content }: FeaturedContentProps) {
 
       {/* Content */}
       <div className="relative h-full container mx-auto px-4 flex flex-col justify-center">
-        <div className="max-w-2xl pt-[8rem]">
+        <div className="max-w-2xl pt-[30vh]">
           <h1 className="text-4xl md:text-6xl font-bold mb-4">{content.title}</h1>
 
           {/* <div className="flex items-center text-sm text-gray-300 mb-4">
@@ -79,9 +79,10 @@ export function FeaturedContent({ content }: FeaturedContentProps) {
               </Link>
             </Button>
           </div>
-        </div>
-        <div className="absolute">
-          <span className="text-lg">{content.rating}</span>
+
+          <div className="absolute right-0 bottom-1">
+            <span className="text-lg">{content.rating}</span>
+          </div>
         </div>
       </div>
     </div>
