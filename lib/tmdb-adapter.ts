@@ -7,7 +7,7 @@ export function adaptMovie(tmdbMovie: any): any {
     tmdbId: tmdbMovie.id,
     title: tmdbMovie.title,
     description: tmdbMovie.overview,
-    thumbnail: getImageUrl(tmdbMovie.backdrop_path, BACKDROP_SIZES.medium),
+    thumbnail: getImageUrl(tmdbMovie.backdrop_path, BACKDROP_SIZES.original),
     poster: getImageUrl(tmdbMovie.poster_path, POSTER_SIZES.large),
     videoUrl: "", // TMDB doesn't provide actual video streams
     trailerUrl: "", // We'll set this separately from videos data
@@ -41,7 +41,7 @@ export function adaptTVShow(tmdbShow: any): any {
     tmdbId: tmdbShow.id,
     title: tmdbShow.name,
     description: tmdbShow.overview,
-    thumbnail: getImageUrl(tmdbShow.backdrop_path, BACKDROP_SIZES.medium),
+    thumbnail: getImageUrl(tmdbShow.backdrop_path, BACKDROP_SIZES.original),
     poster: getImageUrl(tmdbShow.poster_path, POSTER_SIZES.large),
     videoUrl: "", // TMDB doesn't provide actual video streams
     trailerUrl: "", // We'll set this separately from videos data
@@ -294,7 +294,7 @@ export function adaptTVShowEpisode(tmdbEpisode: any, showId: string, seasonNumbe
     episodeNumber: tmdbEpisode.episode_number,
     airDate: tmdbEpisode.air_date,
     runtime: tmdbEpisode.runtime,
-    stillImage: getImageUrl(tmdbEpisode.still_path, BACKDROP_SIZES.large),
+    stillImage: getImageUrl(tmdbEpisode.still_path, BACKDROP_SIZES.original),
     voteAverage: tmdbEpisode.vote_average,
     voteCount: tmdbEpisode.vote_count,
     crew: tmdbEpisode.crew ? tmdbEpisode.crew.map(adaptPerson) : [],

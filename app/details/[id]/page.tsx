@@ -194,7 +194,7 @@ export default function DetailsPage() {
   return (
     <div className="min-h-screen bg-black">
       {/* Hero section with backdrop */}
-      <div className="relative w-full h-[50vh] md:h-[85vh] overflow-hidden">
+      <div className="relative w-full h-[50vh] md:h-[100vh] overflow-hidden">
         <Image
           src={details.thumbnail || "/placeholder.svg"}
           alt={details.title}
@@ -218,7 +218,7 @@ export default function DetailsPage() {
         </div>
       </div>
 
-      <div className="container mx-auto px-4 -mt-32 relative z-10">
+      <div className="container mx-auto px-4 -mt-[30vh] relative z-10">
         <div className="grid grid-cols-1 gap-8">
           {/* Left column - Poster and actions */}
           {/* <div className="lg:col-span-1">
