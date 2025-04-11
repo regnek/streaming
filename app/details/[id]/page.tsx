@@ -194,7 +194,7 @@ export default function DetailsPage() {
   return (
     <div className="min-h-screen bg-black">
       {/* Hero section with backdrop */}
-      <div className="relative w-full h-[50vh] md:h-[60vh] overflow-hidden">
+      <div className="relative w-full h-[50vh] md:h-[75vh] overflow-hidden">
         <Image
           src={details.thumbnail || "/placeholder.svg"}
           alt={details.title}
@@ -217,9 +217,9 @@ export default function DetailsPage() {
       </div>
 
       <div className="container mx-auto px-4 -mt-32 relative z-10">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 gap-8">
           {/* Left column - Poster and actions */}
-          <div className="lg:col-span-1">
+          {/* <div className="lg:col-span-1">
             <div className="relative aspect-[2/3] w-full max-w-xs mx-auto lg:mx-0 rounded-lg overflow-hidden shadow-xl">
               <Image src={details.poster || "/placeholder.svg"} alt={details.title} fill className="object-cover" />
             </div>
@@ -255,7 +255,7 @@ export default function DetailsPage() {
                 )}
               </Button>
             </div>
-          </div>
+          </div> */}
 
           {/* Right column - Details */}
           <div className="lg:col-span-2">
@@ -299,6 +299,38 @@ export default function DetailsPage() {
             </div>
 
             <p className="text-gray-300 mb-8">{details.description}</p>
+
+            <div className="flex flex-wrap gap-3 mt-6 justify-center lg:justify-start">
+              <Button asChild className="flex items-center gap-2">
+                <Link href={`/watch/${details.id}`}>
+                  <Play className="w-4 h-4" />
+                  Watch Now
+                </Link>
+              </Button>
+
+              {details.category === "tv-show" && (
+                <Button variant="outline" className="flex items-center gap-2" asChild>
+                  <Link href={`/tv-show/${details.id}/seasons`}>
+                    <List className="w-4 h-4" />
+                    View Episodes
+                  </Link>
+                </Button>
+              )}
+
+              <Button variant="outline" className="flex items-center gap-2" onClick={handleWatchlistToggle}>
+                {isInUserWatchlist ? (
+                  <>
+                    <Check className="w-4 h-4" />
+                    In Watchlist
+                  </>
+                ) : (
+                  <>
+                    <Plus className="w-4 h-4" />
+                    Add to Watchlist
+                  </>
+                )}
+              </Button>
+            </div>
 
             {details.trailerUrl && (
               <div className="mb-8">
