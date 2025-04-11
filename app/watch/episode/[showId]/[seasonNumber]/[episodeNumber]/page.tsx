@@ -32,7 +32,7 @@ export default function EpisodeWatchPage() {
   const [previousEpisode, setPreviousEpisode] = useState<any>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState("")
-  const [showEpisodeList, setShowEpisodeList] = useState(false)
+  const [showEpisodeList, setShowEpisodeList] = useState(true)
   const [watchedEpisodes, setWatchedEpisodes] = useState<string[]>([])
 
   useEffect(() => {
@@ -163,7 +163,7 @@ export default function EpisodeWatchPage() {
               <h2 className="text-xl font-semibold mb-4">Season {seasonNumber} episodes</h2>
               <Button
                 variant="outline"
-                onClick={() => setShowEpisodeList(showEpisodeList)}
+                onClick={() => setShowEpisodeList(!showEpisodeList)}
                 className="flex items-center gap-1"
               >
                 <ListVideo className="w-4 h-4" />
