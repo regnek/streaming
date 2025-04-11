@@ -7,6 +7,8 @@ import { Button } from "@/components/ui/button"
 import { Slider } from "@/components/ui/slider"
 import { updateVideoProgress, getVideoProgress } from "@/lib/progress-service"
 
+import Hls from 'hls.js'
+
 interface VideoPlayerProps {
   src: string
   poster?: string
@@ -27,6 +29,32 @@ export function VideoPlayer({ src, poster, title, videoId, onNext, onPrevious }:
   const [isFullscreen, setIsFullscreen] = useState(false)
   const [showControls, setShowControls] = useState(true)
   const [isBuffering, setIsBuffering] = useState(false)
+
+  // hls playback support
+  useEffect(() => {
+    const video = videoRef.current
+    if (!video) return
+  
+    if (Hls.isSupported()) {
+      const hls = new Hls()
+  
+      hls.loadSource(src) // src is your .m3u8 URL
+      hls.attachMedia(video)
+  
+      hls.on(Hls.Events.MANIFEST_PARSED, () => {
+        video.play()
+      })
+  
+      return () => {
+        hls.destroy()
+      }
+    } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+      video.src = src
+      video.addEventListener('loadedmetadata', () => {
+        video.play()
+      })
+    }
+  }, [src])
 
   // Hide controls after inactivity
   useEffect(() => {
