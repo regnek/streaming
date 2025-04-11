@@ -294,7 +294,7 @@ export function adaptTVShowEpisode(tmdbEpisode: any, showId: string, seasonNumbe
     episodeNumber: tmdbEpisode.episode_number,
     airDate: tmdbEpisode.air_date,
     runtime: tmdbEpisode.runtime,
-    stillImage: getImageUrl(tmdbEpisode.still_path, BACKDROP_SIZES.medium),
+    stillImage: getImageUrl(tmdbEpisode.still_path, BACKDROP_SIZES.large),
     voteAverage: tmdbEpisode.vote_average,
     voteCount: tmdbEpisode.vote_count,
     crew: tmdbEpisode.crew ? tmdbEpisode.crew.map(adaptPerson) : [],
