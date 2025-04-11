@@ -121,7 +121,7 @@ export default function EpisodeWatchPage() {
           <div>
             <h1 className="text-2xl font-bold">{episode.title}</h1>
             <p className="text-gray-400">
-              {show.title} • Season {seasonNumber}, Episode {episodeNumber}
+            <Link href={`/details/${showId}`}>{show.title}</Link> • Season {seasonNumber}, Episode {episodeNumber}
             </p>
           </div>
 
@@ -157,38 +157,35 @@ export default function EpisodeWatchPage() {
           )}
         </div>
 
-        {showEpisodeList && (
-          <div className="mb-8">
+        
+        <div className="mb-8">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
-              <h2 className="text-xl font-semibold mb-4">Season {seasonNumber} Episodes</h2>
+              <h2 className="text-xl font-semibold mb-4">Season {seasonNumber} episodes</h2>
               <Button
                 variant="outline"
-                onClick={() => setShowEpisodeList(!showEpisodeList)}
+                onClick={() => setShowEpisodeList(showEpisodeList)}
                 className="flex items-center gap-1"
               >
                 <ListVideo className="w-4 h-4" />
-                {showEpisodeList ? "Hide Episodes" : "Show Episodes"}
+                {showEpisodeList ? "Show episodes" : "Hide episodes"}
               </Button>
             </div>
-            <div className="bg-gray-900/30 border border-gray-800 rounded-lg p-4">
-              <EpisodeList
-                episodes={seasonEpisodes}
-                showId={showId}
-                seasonNumber={seasonNumber}
-                watchedEpisodes={watchedEpisodes}
-                currentEpisodeNumber={episodeNumber}
-              />
-            </div>
-          </div>
-        )}
+            {showEpisodeList && (
+              <div className="bg-gray-900/30 border border-gray-800 rounded-lg p-4">
+                <EpisodeList
+                  episodes={seasonEpisodes}
+                  showId={showId}
+                  seasonNumber={seasonNumber}
+                  watchedEpisodes={watchedEpisodes}
+                  currentEpisodeNumber={episodeNumber}
+                />
+              </div>
+            )}
+        </div>
 
         <div className="flex justify-between items-center">
           <Button asChild variant="outline">
-            <Link href={`/tv-show/${showId}/seasons`}>View All Seasons</Link>
-          </Button>
-
-          <Button asChild>
-            <Link href={`/details/${showId}`}>Show Details</Link>
+            <Link href={`/tv-show/${showId}/seasons`}>View all seasons</Link>
           </Button>
         </div>
       </div>
