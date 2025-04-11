@@ -259,7 +259,7 @@ export default function DetailsPage() {
 
           {/* Right column - Details */}
           <div className="lg:col-span-2">
-            <div style="position:relative; top: -8rem">
+            <div className="relative -top-[8rem]">
               <h1 className="text-3xl md:text-4xl font-bold mb-2">{details.title}</h1>
 
               <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-gray-300 mb-4">
