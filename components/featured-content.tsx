@@ -15,7 +15,7 @@ export function FeaturedContent({ content }: FeaturedContentProps) {
   }
 
   return (
-    <div className="relative w-full h-[85vh] overflow-hidden">
+    <div className="relative w-full h-[75vh] overflow-hidden">
       {/* Background image */}
       <div className="absolute inset-0">
         <Image

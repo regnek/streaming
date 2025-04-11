@@ -102,9 +102,9 @@ export function ContentRow({ title, seeAllLink, items }: ContentRowProps) {
                   </div> */}
                 </div>
 
-                <div className="mt-2">
+                {/* <div className="mt-2">
                     <h3 className="text-sm font-medium line-clamp-1">{item.title}</h3>
-                </div>
+                </div> */}
               </div>
             </Link>
           ))}
