@@ -1,0 +1,74 @@
+"use client"
+import Image from "next/image"
+import Link from "next/link"
+import { Info, Play, Star } from "lucide-react"
+
+import { Button } from "@/components/ui/button"
+
+interface FeaturedContentProps {
+  content: any
+}
+
+export function FeaturedContent({ content }: FeaturedContentProps) {
+  if (!content) {
+    return null
+  }
+
+  return (
+    <div className="relative w-full h-[70vh] overflow-hidden">
+      {/* Background image */}
+      <div className="absolute inset-0">
+        <Image
+          src={content.thumbnail || "/placeholder.svg"}
+          alt={content.title}
+          fill
+          priority
+          className="object-cover"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/60 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-r from-black/90 via-black/40 to-transparent" />
+      </div>
+
+      {/* Content */}
+      <div className="relative h-full container mx-auto px-4 flex flex-col justify-center">
+        <div className="max-w-2xl pt-20">
+          <h1 className="text-4xl md:text-6xl font-bold mb-4">{content.title}</h1>
+
+          <div className="flex items-center text-sm text-gray-300 mb-4">
+            <span>{content.releaseYear}</span>
+            <span className="mx-2">•</span>
+            <span>{content.rating}</span>
+            <span className="mx-2">•</span>
+            <span>{content.duration}</span>
+            {content.userRating && (
+              <>
+                <span className="mx-2">•</span>
+                <span className="flex items-center">
+                  <Star className="w-4 h-4 text-yellow-400 mr-1" />
+                  {content.userRating.toFixed(1)}
+                </span>
+              </>
+            )}
+          </div>
+
+          <p className="text-lg text-gray-200 mb-6 line-clamp-3">{content.description}</p>
+
+          <div className="flex flex-wrap gap-4">
+            <Button asChild size="lg" className="gap-2">
+              <Link href={`/watch/${content.id}`}>
+                <Play className="w-5 h-5" />
+                Play
+              </Link>
+            </Button>
+            <Button asChild variant="outline" size="lg" className="gap-2">
+              <Link href={`/details/${content.id}`}>
+                <Info className="w-5 h-5" />
+                More Info
+              </Link>
+            </Button>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
