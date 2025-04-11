@@ -300,6 +300,6 @@ export function adaptTVShowEpisode(tmdbEpisode: any, showId: string, seasonNumbe
     crew: tmdbEpisode.crew ? tmdbEpisode.crew.map(adaptPerson) : [],
     guestStars: tmdbEpisode.guest_stars ? tmdbEpisode.guest_stars.map(adaptPerson) : [],
     // For demo purposes, we'll use a sample video URL
-    videoUrl: `https://moviesandshow.s3.eu-west-2.amazonaws.com/Shows/${showId}/s${seasonNumber}/${seasonNumber}-${tmdbEpisode.episode_number}.mp4`,
+    videoUrl: `https://moviesandshow.s3.eu-west-2.amazonaws.com/Shows/${showId}/${seasonNumber}/${tmdbEpisode.episode_number}.mp4`,
   }
 }
