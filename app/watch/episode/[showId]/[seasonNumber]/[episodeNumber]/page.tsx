@@ -100,7 +100,7 @@ export default function EpisodeWatchPage() {
 
   return (
     <div className="min-h-screen bg-black">
-      <div className="relative h-[100vh]">
+      <div className="relative">
         {/* Back button */}
         <Button
           variant="ghost"

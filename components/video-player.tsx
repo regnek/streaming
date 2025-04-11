@@ -278,7 +278,7 @@ export function VideoPlayer({ src, poster, title, videoId, onNext, onPrevious }:
   }
 
   return (
-    <div ref={playerRef} className="relative w-full aspect-video bg-black" onClick={togglePlay}>
+    <div ref={playerRef} className="relative w-full aspect-video bg-black max-h-[100vh]" onClick={togglePlay}>
       <video ref={videoRef} src={src} poster={poster} className="w-full h-full" onClick={(e) => e.stopPropagation()} />
 
       {/* Buffering indicator */}
