@@ -31,30 +31,31 @@ export function VideoPlayer({ src, poster, title, videoId, onNext, onPrevious }:
   const [isBuffering, setIsBuffering] = useState(false)
 
   // hls playback support
-  useEffect(() => {
-    const video = videoRef.current
-    if (!video) return
+  // useEffect(() => {
+  //   const video = videoRef.current
+  //   const src = 'https://moviesandshow.s3.eu-west-2.amazonaws.com/Shows/arrested-development/s1/1-1.mp4'
+  //   if (!video) return
   
-    if (Hls.isSupported()) {
-      const hls = new Hls()
+  //   if (Hls.isSupported()) {
+  //     const hls = new Hls()
   
-      hls.loadSource(src) // src is your .m3u8 URL
-      hls.attachMedia(video)
+  //     hls.loadSource(src) // src is your .m3u8 URL
+  //     hls.attachMedia(video)
   
-      hls.on(Hls.Events.MANIFEST_PARSED, () => {
-        video.play()
-      })
+  //     hls.on(Hls.Events.MANIFEST_PARSED, () => {
+  //       video.play()
+  //     })
   
-      return () => {
-        hls.destroy()
-      }
-    } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-      video.src = src
-      video.addEventListener('loadedmetadata', () => {
-        video.play()
-      })
-    }
-  }, [src])
+  //     return () => {
+  //       hls.destroy()
+  //     }
+  //   } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+  //     video.src = src
+  //     video.addEventListener('loadedmetadata', () => {
+  //       video.play()
+  //     })
+  //   }
+  // }, [src])
 
   // Hide controls after inactivity
   useEffect(() => {
