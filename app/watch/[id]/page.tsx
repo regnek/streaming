@@ -66,7 +66,13 @@ export default function WatchPage() {
   return (
     <div className="min-h-screen bg-black">
       <div className="relative">
-        <VideoPlayer src={video.videoUrl} poster={video.thumbnail} title={video.title} />
+        <VideoPlayer
+          src={video.videoUrl}
+          poster={video.thumbnail}
+          title={video.title}
+          videoId={video.id}
+          autoplay={true} // Enable autoplay for movies
+        />
       </div>
 
       <div className="container mx-auto px-4 py-8">

@@ -1,7 +1,7 @@
 "use client"
 import Image from "next/image"
 import Link from "next/link"
-import { Info, Play, Star } from "lucide-react"
+import { Play } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 
@@ -83,7 +83,6 @@ export function FeaturedContent({ content }: FeaturedContentProps) {
             <div>
               <span className="text-lg">{content.rating}</span>
             </div>
-
           </div>
         </div>
       </div>

@@ -3,7 +3,7 @@
 import { useState, useRef } from "react"
 import Link from "next/link"
 import Image from "next/image"
-import { ChevronLeft, ChevronRight, Play, Info } from "lucide-react"
+import { ChevronLeft, ChevronRight } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 
@@ -50,9 +50,9 @@ export function ContentRow({ title, seeAllLink, items }: ContentRowProps) {
     <div className="relative">
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-xl font-semibold">{title}</h2>
-          <Button variant="ghost" size="sm" className="flex items-center gap-1">
-            See all <ChevronRight className="w-4 h-4" />
-          </Button>
+        <Button variant="ghost" size="sm" className="flex items-center gap-1">
+          See all <ChevronRight className="w-4 h-4" />
+        </Button>
       </div>
 
       <div className="relative group">
