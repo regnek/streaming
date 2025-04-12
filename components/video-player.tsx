@@ -20,6 +20,7 @@ import { Button } from "@/components/ui/button"
 import { Slider } from "@/components/ui/slider"
 import { updateVideoProgress, getVideoProgress } from "@/lib/progress-service"
 import Image from "next/image"
+import Hls from 'hls.js'
 
 // Update the VideoPlayerProps interface to include tooltip information
 interface VideoPlayerProps {
@@ -92,6 +93,25 @@ export function VideoPlayer({
   // Add state variables for tooltip visibility
   const [showPrevTooltip, setShowPrevTooltip] = useState(false)
   const [showNextTooltip, setShowNextTooltip] = useState(false)
+
+  // Setup HLS streaming
+  useEffect(() => {
+    const video = videoRef.current
+    const src = 'https://d36cjdeusqqqhg.cloudfront.net/Shows/tv-4589/output/1/1_master.m3u8'
+    if (!video) return
+
+    if (Hls.isSupported()) {
+      const hls = new Hls()
+      hls.loadSource(src) // src = your .m3u8 URL from CloudFront
+      hls.attachMedia(video)
+
+      return () => {
+        hls.destroy()
+      }
+    } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+      video.src = src
+    }
+  }, [src])
 
   // Update current episode data when props change
   useEffect(() => {
