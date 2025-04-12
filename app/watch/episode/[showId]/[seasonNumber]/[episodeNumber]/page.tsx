@@ -8,12 +8,14 @@ import { ChevronLeft, ChevronRight, ListVideo, ArrowLeft } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { VideoPlayer } from "@/components/video-player"
 import { EpisodeList } from "@/components/episode-list"
+import { SeasonSelector } from "@/components/season-selector"
 import {
   getContentDetails,
   getTVShowSeason,
   getTVShowEpisode,
   getNextEpisode,
   getPreviousEpisode,
+  getTVShowSeasons,
 } from "@/lib/content-service"
 import { getWatchedEpisodes } from "@/lib/progress-service"
 
@@ -35,6 +37,11 @@ export default function EpisodeWatchPage() {
   const [showEpisodeList, setShowEpisodeList] = useState(true)
   const [watchedEpisodes, setWatchedEpisodes] = useState<string[]>([])
   const [hasMounted, setHasMounted] = useState(false)
+
+  // New state for season selection
+  const [availableSeasons, setAvailableSeasons] = useState<any[]>([])
+  const [selectedSeasonNumber, setSelectedSeasonNumber] = useState(seasonNumber)
+  const [isLoadingSeasonEpisodes, setIsLoadingSeasonEpisodes] = useState(false)
 
   // Create a function to fetch episode data that can be reused
   const fetchEpisodeData = useCallback(async (showId: string, seasonNumber: number, episodeNumber: number) => {
@@ -96,6 +103,7 @@ export default function EpisodeWatchPage() {
             setShowId(newShowId)
             setSeasonNumber(newSeasonNumber)
             setEpisodeNumber(newEpisodeNumber)
+            setSelectedSeasonNumber(newSeasonNumber) // Update selected season as well
 
             // Fetch data for the next episode after this one
             try {
@@ -121,6 +129,7 @@ export default function EpisodeWatchPage() {
     setHasMounted(true)
   }, [])
 
+  // Fetch show details and all seasons
   useEffect(() => {
     if (!hasMounted) {
       return
@@ -128,7 +137,7 @@ export default function EpisodeWatchPage() {
 
     let didCancel = false
 
-    const fetchData = async () => {
+    const fetchShowData = async () => {
       setIsLoading(true)
       setError("")
 
@@ -139,18 +148,10 @@ export default function EpisodeWatchPage() {
           setShow(showDetails)
         }
 
-        // Fetch episode data
-        const { episodeDetails, next, prev } = await fetchEpisodeData(showId, seasonNumber, episodeNumber)
+        // Fetch all seasons for the show
+        const seasons = await getTVShowSeasons(showId)
         if (!didCancel) {
-          setEpisode(episodeDetails)
-          setNextEpisode(next)
-          setPreviousEpisode(prev)
-        }
-
-        // Fetch all episodes for the season
-        const seasonDetails = await getTVShowSeason(showId, seasonNumber)
-        if (!didCancel) {
-          setSeasonEpisodes(seasonDetails.episodes || [])
+          setAvailableSeasons(seasons)
         }
 
         // Get watched episodes
@@ -159,8 +160,10 @@ export default function EpisodeWatchPage() {
           setWatchedEpisodes(watched)
         }
       } catch (err) {
-        console.error("Failed to fetch episode data:", err)
-        setError("Failed to load episode. Please try again later.")
+        console.error("Failed to fetch show data:", err)
+        if (!didCancel) {
+          setError("Failed to load show details. Please try again later.")
+        }
       } finally {
         if (!didCancel) {
           setIsLoading(false)
@@ -168,12 +171,90 @@ export default function EpisodeWatchPage() {
       }
     }
 
-    fetchData()
+    fetchShowData()
+
+    return () => {
+      didCancel = true
+    }
+  }, [showId, hasMounted])
+
+  // Fetch current episode data
+  useEffect(() => {
+    if (!hasMounted) {
+      return
+    }
+
+    let didCancel = false
+
+    const fetchCurrentEpisodeData = async () => {
+      setIsLoading(true)
+      setError("")
+
+      try {
+        // Fetch episode data
+        const { episodeDetails, next, prev } = await fetchEpisodeData(showId, seasonNumber, episodeNumber)
+        if (!didCancel) {
+          setEpisode(episodeDetails)
+          setNextEpisode(next)
+          setPreviousEpisode(prev)
+
+          // Set the selected season to match the current episode's season
+          setSelectedSeasonNumber(seasonNumber)
+        }
+      } catch (err) {
+        console.error("Failed to fetch episode data:", err)
+        if (!didCancel) {
+          setError("Failed to load episode. Please try again later.")
+        }
+      } finally {
+        if (!didCancel) {
+          setIsLoading(false)
+        }
+      }
+    }
+
+    fetchCurrentEpisodeData()
 
     return () => {
       didCancel = true
     }
   }, [showId, seasonNumber, episodeNumber, fetchEpisodeData, hasMounted])
+
+  // Fetch episodes for the selected season
+  useEffect(() => {
+    if (!hasMounted || !selectedSeasonNumber) {
+      return
+    }
+
+    let didCancel = false
+
+    const fetchSeasonEpisodes = async () => {
+      setIsLoadingSeasonEpisodes(true)
+
+      try {
+        // Fetch all episodes for the selected season
+        const seasonDetails = await getTVShowSeason(showId, selectedSeasonNumber)
+        if (!didCancel) {
+          setSeasonEpisodes(seasonDetails.episodes || [])
+        }
+      } catch (err) {
+        console.error(`Failed to fetch episodes for season ${selectedSeasonNumber}:`, err)
+        if (!didCancel) {
+          setSeasonEpisodes([])
+        }
+      } finally {
+        if (!didCancel) {
+          setIsLoadingSeasonEpisodes(false)
+        }
+      }
+    }
+
+    fetchSeasonEpisodes()
+
+    return () => {
+      didCancel = true
+    }
+  }, [showId, selectedSeasonNumber, hasMounted])
 
   // Add logging to debug the episode data
   useEffect(() => {
@@ -195,6 +276,11 @@ export default function EpisodeWatchPage() {
 
     // Use router.push for client-side navigation
     router.push(url)
+  }
+
+  // Handle season change
+  const handleSeasonChange = (newSeasonNumber: number) => {
+    setSelectedSeasonNumber(newSeasonNumber)
   }
 
   if (isLoading) {
@@ -330,7 +416,16 @@ export default function EpisodeWatchPage() {
 
         <div className="mb-8">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
-            <h2 className="text-xl font-semibold mb-4">Season {seasonNumber} episodes</h2>
+            <div className="flex items-center gap-4">
+              <h2 className="text-xl font-semibold">Episodes</h2>
+              {availableSeasons.length > 0 && (
+                <SeasonSelector
+                  seasons={availableSeasons}
+                  currentSeason={selectedSeasonNumber}
+                  onSeasonChange={handleSeasonChange}
+                />
+              )}
+            </div>
             <Button
               variant="outline"
               onClick={() => setShowEpisodeList(!showEpisodeList)}
@@ -342,13 +437,23 @@ export default function EpisodeWatchPage() {
           </div>
           {showEpisodeList && (
             <div className="bg-gray-900/30 border border-gray-800 rounded-lg p-4">
-              <EpisodeList
-                episodes={seasonEpisodes}
-                showId={showId}
-                seasonNumber={seasonNumber}
-                watchedEpisodes={watchedEpisodes}
-                currentEpisodeNumber={episodeNumber}
-              />
+              {isLoadingSeasonEpisodes ? (
+                <div className="flex justify-center py-8">
+                  <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+                </div>
+              ) : seasonEpisodes.length > 0 ? (
+                <EpisodeList
+                  episodes={seasonEpisodes}
+                  showId={showId}
+                  seasonNumber={selectedSeasonNumber}
+                  watchedEpisodes={watchedEpisodes}
+                  currentEpisodeNumber={selectedSeasonNumber === seasonNumber ? episodeNumber : undefined}
+                />
+              ) : (
+                <div className="text-center py-8">
+                  <p className="text-gray-400">No episodes available for this season.</p>
+                </div>
+              )}
             </div>
           )}
         </div>

@@ -20,7 +20,7 @@ import { Button } from "@/components/ui/button"
 import { Slider } from "@/components/ui/slider"
 import { updateVideoProgress, getVideoProgress } from "@/lib/progress-service"
 import Image from "next/image"
-import Hls from 'hls.js'
+import Hls from "hls.js"
 
 // Update the VideoPlayerProps interface to include tooltip information
 interface VideoPlayerProps {
@@ -94,24 +94,53 @@ export function VideoPlayer({
   const [showPrevTooltip, setShowPrevTooltip] = useState(false)
   const [showNextTooltip, setShowNextTooltip] = useState(false)
 
+  const [showPlayPauseIndicator, setShowPlayPauseIndicator] = useState(false)
+
   // Setup HLS streaming
   useEffect(() => {
     const video = videoRef.current
-    const src = 'https://d36cjdeusqqqhg.cloudfront.net/Shows/tv-4589/output/1/1_master.m3u8'
     if (!video) return
+
+    // Extract show ID, season number, and episode number from videoId if available
+    // Format of videoId is expected to be: episode-{showId}-{seasonNumber}-{episodeNumber}
+    let streamingSrc = src // Default to the src prop
+
+    if (videoId && videoId.startsWith("episode-")) {
+      const parts = videoId.split("-")
+      if (parts.length >= 4) {
+        // Handle different ID formats
+        let showId, seasonNumber, episodeNumber
+
+        if (parts.length === 4) {
+          // Simple format: episode-showId-seasonNumber-episodeNumber
+          showId = parts[1]
+          seasonNumber = parts[2]
+          episodeNumber = parts[3]
+        } else {
+          // Complex format where showId might contain hyphens
+          showId = parts.slice(1, parts.length - 2).join("-")
+          seasonNumber = parts[parts.length - 2]
+          episodeNumber = parts[parts.length - 1]
+        }
+
+        // Generate dynamic streaming URL
+        streamingSrc = `https://d36cjdeusqqqhg.cloudfront.net/Shows/${showId}/${seasonNumber}/output/${episodeNumber}/${episodeNumber}_master.m3u8`
+        console.log(`Generated dynamic streaming URL: ${streamingSrc}`)
+      }
+    }
 
     if (Hls.isSupported()) {
       const hls = new Hls()
-      hls.loadSource(src) // src = your .m3u8 URL from CloudFront
+      hls.loadSource(streamingSrc)
       hls.attachMedia(video)
 
       return () => {
         hls.destroy()
       }
-    } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-      video.src = src
+    } else if (video.canPlayType("application/vnd.apple.mpegurl")) {
+      video.src = streamingSrc
     }
-  }, [src])
+  }, [src, videoId])
 
   // Update current episode data when props change
   useEffect(() => {
@@ -423,15 +452,34 @@ export function VideoPlayer({
     }
   }
 
-  const togglePlay = () => {
+  const togglePlay = (e?: React.MouseEvent) => {
+    // If the event exists, stop it from propagating further
+    if (e) {
+      e.stopPropagation()
+    }
+
     const video = videoRef.current
     if (!video) return
 
     if (isPlaying) {
       video.pause()
+      setIsPlaying(false)
     } else {
-      video.play()
+      video
+        .play()
+        .then(() => {
+          setIsPlaying(true)
+        })
+        .catch((error) => {
+          console.error("Error playing video:", error)
+        })
     }
+
+    // Show play/pause indicator
+    setShowPlayPauseIndicator(true)
+    setTimeout(() => {
+      setShowPlayPauseIndicator(false)
+    }, 800)
   }
 
   const toggleMute = () => {
@@ -550,8 +598,21 @@ export function VideoPlayer({
         src={currentEpisodeData.src}
         poster={currentEpisodeData.poster}
         className="w-full h-full"
-        onClick={(e) => e.stopPropagation()}
+        onClick={togglePlay}
       />
+
+      {/* Play/Pause indicator animation */}
+      {showPlayPauseIndicator && (
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+          <div className="bg-black/40 rounded-full p-6 backdrop-blur-sm animate-fade-out">
+            {isPlaying ? (
+              <Play className="w-12 h-12 text-white fill-white" />
+            ) : (
+              <Pause className="w-12 h-12 text-white" />
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Buffering indicator */}
       {isBuffering && (
@@ -586,7 +647,7 @@ export function VideoPlayer({
             variant="ghost"
             size="icon"
             className="w-20 h-20 rounded-full bg-white/20 backdrop-blur-sm hover:bg-white/30"
-            onClick={togglePlay}
+            onClick={(e) => togglePlay(e)}
           >
             <Play className="w-10 h-10 text-white fill-white" />
             <span className="sr-only">Play</span>
@@ -598,7 +659,9 @@ export function VideoPlayer({
       {showControls && (
         <div
           className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-4"
-          onClick={(e) => e.stopPropagation()}
+          onClick={(e) => {
+            e.stopPropagation()
+          }}
         >
           {/* Progress bar */}
           <div className="mb-2">
@@ -613,7 +676,12 @@ export function VideoPlayer({
 
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Button variant="ghost" size="icon" className="text-white hover:bg-white/10" onClick={togglePlay}>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="text-white hover:bg-white/10"
+                onClick={(e) => togglePlay(e)}
+              >
                 {isPlaying ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5" />}
                 <span className="sr-only">{isPlaying ? "Pause" : "Play"}</span>
               </Button>

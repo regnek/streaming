@@ -31,6 +31,11 @@ import { CastMember } from "@/components/cast-member"
 import { getContentDetails, ContentError } from "@/lib/content-service"
 import { addToWatchlist, removeFromWatchlist, submitReview, isInWatchlist } from "@/lib/api"
 import { useAuth } from "@/hooks/use-auth"
+import { Dialog, DialogContent, DialogOverlay } from "@/components/ui/dialog"
+import { SeasonSelector } from "@/components/season-selector"
+import { EpisodeList } from "@/components/episode-list"
+import { getTVShowSeason } from "@/lib/content-service"
+import { getWatchedEpisodes } from "@/lib/progress-service"
 
 export default function DetailsPage() {
   const params = useParams()
@@ -41,12 +46,19 @@ export default function DetailsPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState("")
   const [isInUserWatchlist, setIsInUserWatchlist] = useState(false)
+  const [showTrailerModal, setShowTrailerModal] = useState(false)
 
   // Review form state
   const [userRating, setUserRating] = useState(0)
   const [reviewComment, setReviewComment] = useState("")
   const [isSubmittingReview, setIsSubmittingReview] = useState(false)
   const [reviewError, setReviewError] = useState("")
+
+  // Episode state
+  const [selectedSeason, setSelectedSeason] = useState(1)
+  const [seasonEpisodes, setSeasonEpisodes] = useState<any[]>([])
+  const [isLoadingEpisodes, setIsLoadingEpisodes] = useState(false)
+  const [watchedEpisodes, setWatchedEpisodes] = useState<string[]>([])
 
   useEffect(() => {
     const fetchDetails = async () => {
@@ -79,6 +91,48 @@ export default function DetailsPage() {
 
     fetchDetails()
   }, [params.id, user])
+
+  // Fetch episodes for the selected season
+  useEffect(() => {
+    if (!details || details.category !== "tv-show") return
+
+    const fetchSeasonEpisodes = async () => {
+      setIsLoadingEpisodes(true)
+      try {
+        // Find the first regular season if none is selected
+        if (!selectedSeason && details.seasons && details.seasons.length > 0) {
+          const firstRegularSeason = details.seasons.find((s: any) => s.seasonNumber > 0) || details.seasons[0]
+          setSelectedSeason(firstRegularSeason.seasonNumber)
+          return // The state update will trigger this effect again
+        }
+
+        const seasonData = await getTVShowSeason(details.id, selectedSeason)
+        setSeasonEpisodes(seasonData.episodes || [])
+
+        // Get watched episodes
+        const watched = getWatchedEpisodes()
+        setWatchedEpisodes(watched)
+      } catch (error) {
+        console.error(`Failed to fetch episodes for season ${selectedSeason}:`, error)
+        setSeasonEpisodes([])
+      } finally {
+        setIsLoadingEpisodes(false)
+      }
+    }
+
+    if (selectedSeason) {
+      fetchSeasonEpisodes()
+    }
+  }, [details, selectedSeason])
+
+  // Initialize the selected season when details are loaded
+  useEffect(() => {
+    if (details?.category === "tv-show" && details.seasons && details.seasons.length > 0) {
+      // Find the first regular season (not season 0 which is often specials)
+      const firstRegularSeason = details.seasons.find((s: any) => s.seasonNumber > 0) || details.seasons[0]
+      setSelectedSeason(firstRegularSeason.seasonNumber)
+    }
+  }, [details])
 
   const handleWatchlistToggle = async () => {
     if (!user) {
@@ -311,6 +365,17 @@ export default function DetailsPage() {
                   </Link>
                 </Button>
 
+                {details.trailerUrl && (
+                  <Button
+                    variant="outline"
+                    className="flex items-center gap-2"
+                    onClick={() => setShowTrailerModal(true)}
+                  >
+                    <Play className="w-4 h-4" />
+                    Watch Trailer
+                  </Button>
+                )}
+
                 {details.category === "tv-show" && (
                   <Button variant="outline" className="flex items-center gap-2" asChild>
                     <Link href={`/tv-show/${details.id}/seasons`}>
@@ -336,12 +401,15 @@ export default function DetailsPage() {
               </div>
             </div>
 
-            {details.trailerUrl && (
-              <div className="mb-8">
-                <h2 className="text-xl font-semibold mb-4">Trailer</h2>
-                <VideoTrailer src={details.trailerUrl} poster={details.thumbnail} />
-              </div>
-            )}
+            {/* Trailer Modal */}
+            <Dialog open={showTrailerModal} onOpenChange={setShowTrailerModal}>
+              <DialogOverlay className="bg-black/80" />
+              <DialogContent className="sm:max-w-[80vw] max-h-[90vh] p-0 bg-transparent border-none">
+                <div className="relative w-full aspect-video">
+                  {details.trailerUrl && <VideoTrailer src={details.trailerUrl} poster={details.thumbnail} />}
+                </div>
+              </DialogContent>
+            </Dialog>
 
             <Tabs defaultValue="cast" className="mb-8">
               <TabsList className="mb-4">
@@ -457,44 +525,33 @@ export default function DetailsPage() {
               {details.category === "tv-show" && details.seasons && details.seasons.length > 0 && (
                 <TabsContent value="episodes">
                   <div className="space-y-6">
-                    <div className="flex justify-between items-center">
-                      <h3 className="text-lg font-medium mb-3">Seasons</h3>
-                      <Button asChild variant="outline" size="sm">
-                        <Link href={`/tv-show/${details.id}/seasons`}>View All Episodes</Link>
-                      </Button>
+                    {/* Season selector */}
+                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+                      <h3 className="text-lg font-medium">Episodes</h3>
+                      <SeasonSelector
+                        seasons={details.seasons}
+                        currentSeason={selectedSeason}
+                        onSeasonChange={setSelectedSeason}
+                      />
                     </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {details.seasons.map((season: any) => (
-                        <div key={season.id} className="border border-gray-800 rounded-lg overflow-hidden">
-                          <div className="flex">
-                            <div className="w-1/3">
-                              <Image
-                                src={season.poster || "/placeholder.svg"}
-                                alt={season.name}
-                                width={150}
-                                height={225}
-                                className="object-cover w-full h-full"
-                              />
-                            </div>
-                            <div className="w-2/3 p-4">
-                              <h4 className="font-medium mb-1">{season.name}</h4>
-                              <div className="text-sm text-gray-400 mb-2">
-                                {season.episodeCount} Episodes
-                                {season.airDate && ` • ${new Date(season.airDate).getFullYear()}`}
-                              </div>
-                              <p className="text-sm text-gray-300 line-clamp-3">
-                                {season.overview || "No overview available."}
-                              </p>
-                              <Button asChild size="sm" className="mt-2">
-                                <Link href={`/tv-show/${details.id}/seasons?season=${season.seasonNumber}`}>
-                                  View Episodes
-                                </Link>
-                              </Button>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
+
+                    {/* Episodes list */}
+                    {isLoadingEpisodes ? (
+                      <div className="flex justify-center py-8">
+                        <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+                      </div>
+                    ) : seasonEpisodes.length > 0 ? (
+                      <EpisodeList
+                        episodes={seasonEpisodes}
+                        showId={details.id}
+                        seasonNumber={selectedSeason}
+                        watchedEpisodes={watchedEpisodes}
+                      />
+                    ) : (
+                      <div className="text-center py-8 border border-gray-800 rounded-lg">
+                        <p className="text-gray-400">No episodes available for this season.</p>
+                      </div>
+                    )}
                   </div>
                 </TabsContent>
               )}
