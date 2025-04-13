@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, useRef } from "react"
 import { useParams, useRouter } from "next/navigation"
 import Link from "next/link"
 import { ChevronLeft, ChevronRight, ListVideo, ArrowLeft } from "lucide-react"
@@ -18,10 +18,14 @@ import {
   getTVShowSeasons,
 } from "@/lib/content-service"
 import { getWatchedEpisodes } from "@/lib/progress-service"
+import { useNavigationVisibility } from "@/hooks/use-navigation-visibility"
 
 export default function EpisodeWatchPage() {
   const params = useParams()
   const router = useRouter()
+  const initialRenderComplete = useRef(false)
+  const videoContainerRef = useRef<HTMLDivElement>(null)
+  const { hideNavigation } = useNavigationVisibility()
 
   const [showId, setShowId] = useState(params.showId as string)
   const [seasonNumber, setSeasonNumber] = useState(Number.parseInt(params.seasonNumber as string, 10))
@@ -43,15 +47,37 @@ export default function EpisodeWatchPage() {
   const [selectedSeasonNumber, setSelectedSeasonNumber] = useState(seasonNumber)
   const [isLoadingSeasonEpisodes, setIsLoadingSeasonEpisodes] = useState(false)
 
+  // Mark component as mounted
+  useEffect(() => {
+    setHasMounted(true)
+    initialRenderComplete.current = true
+
+    // Force hide navigation on mount
+    hideNavigation()
+  }, [hideNavigation])
+
   // Create a function to fetch episode data that can be reused
   const fetchEpisodeData = useCallback(async (showId: string, seasonNumber: number, episodeNumber: number) => {
     try {
+      console.log(`Fetching episode data for ${showId}, S${seasonNumber}E${episodeNumber}`)
       // Fetch current episode
       const episodeDetails = await getTVShowEpisode(showId, seasonNumber, episodeNumber)
+      console.log("Episode details fetched successfully:", episodeDetails.title)
 
       // Fetch next and previous episodes
       const next = await getNextEpisode(showId, seasonNumber, episodeNumber).catch(() => null)
+      if (next) {
+        console.log(`Next episode found: S${next.seasonNumber}E${next.episodeNumber} - ${next.title}`)
+      } else {
+        console.log("No next episode available")
+      }
+
       const prev = await getPreviousEpisode(showId, seasonNumber, episodeNumber).catch(() => null)
+      if (prev) {
+        console.log(`Previous episode found: S${prev.seasonNumber}E${prev.episodeNumber} - ${prev.title}`)
+      } else {
+        console.log("No previous episode available")
+      }
 
       return { episodeDetails, next, prev }
     } catch (error) {
@@ -125,10 +151,6 @@ export default function EpisodeWatchPage() {
     [fetchEpisodeData],
   )
 
-  useEffect(() => {
-    setHasMounted(true)
-  }, [])
-
   // Fetch show details and all seasons
   useEffect(() => {
     if (!hasMounted) {
@@ -142,21 +164,26 @@ export default function EpisodeWatchPage() {
       setError("")
 
       try {
+        console.log(`Fetching show details for ${showId}`)
         // Fetch show details
         const showDetails = await getContentDetails(showId)
         if (!didCancel) {
+          console.log("Show details fetched successfully:", showDetails.title)
           setShow(showDetails)
         }
 
         // Fetch all seasons for the show
+        console.log(`Fetching seasons for ${showId}`)
         const seasons = await getTVShowSeasons(showId)
         if (!didCancel) {
+          console.log(`Found ${seasons.length} seasons`)
           setAvailableSeasons(seasons)
         }
 
         // Get watched episodes
         const watched = getWatchedEpisodes()
         if (!didCancel) {
+          console.log(`Found ${watched.length} watched episodes`)
           setWatchedEpisodes(watched)
         }
       } catch (err) {
@@ -191,6 +218,7 @@ export default function EpisodeWatchPage() {
       setError("")
 
       try {
+        console.log(`Fetching episode data for S${seasonNumber}E${episodeNumber}`)
         // Fetch episode data
         const { episodeDetails, next, prev } = await fetchEpisodeData(showId, seasonNumber, episodeNumber)
         if (!didCancel) {
@@ -200,6 +228,7 @@ export default function EpisodeWatchPage() {
 
           // Set the selected season to match the current episode's season
           setSelectedSeasonNumber(seasonNumber)
+          console.log("Episode data fetched successfully")
         }
       } catch (err) {
         console.error("Failed to fetch episode data:", err)
@@ -232,9 +261,11 @@ export default function EpisodeWatchPage() {
       setIsLoadingSeasonEpisodes(true)
 
       try {
+        console.log(`Fetching episodes for season ${selectedSeasonNumber}`)
         // Fetch all episodes for the selected season
         const seasonDetails = await getTVShowSeason(showId, selectedSeasonNumber)
         if (!didCancel) {
+          console.log(`Found ${seasonDetails.episodes?.length || 0} episodes in season ${selectedSeasonNumber}`)
           setSeasonEpisodes(seasonDetails.episodes || [])
         }
       } catch (err) {
@@ -256,19 +287,6 @@ export default function EpisodeWatchPage() {
     }
   }, [showId, selectedSeasonNumber, hasMounted])
 
-  // Add logging to debug the episode data
-  useEffect(() => {
-    if (nextEpisode) {
-      console.log("Next episode data:", {
-        id: nextEpisode.id,
-        showId: nextEpisode.showId,
-        seasonNumber: nextEpisode.seasonNumber,
-        episodeNumber: nextEpisode.episodeNumber,
-        title: nextEpisode.title,
-      })
-    }
-  }, [nextEpisode])
-
   const navigateToEpisode = (targetShowId: string, targetSeasonNumber: number, targetEpisodeNumber: number) => {
     // Construct the URL properly
     const url = `/watch/episode/${targetShowId}/${targetSeasonNumber}/${targetEpisodeNumber}`
@@ -281,6 +299,11 @@ export default function EpisodeWatchPage() {
   // Handle season change
   const handleSeasonChange = (newSeasonNumber: number) => {
     setSelectedSeasonNumber(newSeasonNumber)
+  }
+
+  // Don't render anything on the server
+  if (!initialRenderComplete.current) {
+    return null
   }
 
   if (isLoading) {
@@ -316,7 +339,7 @@ export default function EpisodeWatchPage() {
 
   return (
     <div className="min-h-screen bg-black">
-      <div className="relative">
+      <div ref={videoContainerRef} className="relative video-player-container">
         {/* Back button */}
         <Button
           variant="ghost"
@@ -467,5 +490,3 @@ export default function EpisodeWatchPage() {
     </div>
   )
 }
-
-console.log('hey');

@@ -3,10 +3,11 @@ import type { Metadata } from "next"
 import { Inter } from "next/font/google"
 import "./globals.css"
 import { ThemeProvider } from "@/components/theme-provider"
-import { Navbar } from "@/components/navbar"
 import { Footer } from "@/components/footer"
 import { AuthProvider } from "@/hooks/use-auth"
 import { NavigationHistoryProvider } from "@/components/navigation-history-provider"
+import { NavigationVisibilityProvider } from "@/hooks/use-navigation-visibility"
+import { DynamicNavbar } from "@/components/dynamic-navbar"
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -27,11 +28,13 @@ export default function RootLayout({
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
           <AuthProvider>
             <NavigationHistoryProvider>
-              <div className="flex flex-col min-h-screen">
-                <Navbar />
-                <main className="flex-1">{children}</main>
-                <Footer />
-              </div>
+              <NavigationVisibilityProvider>
+                <div className="flex flex-col min-h-screen">
+                  <DynamicNavbar />
+                  <main className="flex-1">{children}</main>
+                  <Footer />
+                </div>
+              </NavigationVisibilityProvider>
             </NavigationHistoryProvider>
           </AuthProvider>
         </ThemeProvider>
@@ -39,10 +42,6 @@ export default function RootLayout({
     </html>
   )
 }
-
-import "./globals.css"
-
-import "./globals.css"
 
 
 import './globals.css'

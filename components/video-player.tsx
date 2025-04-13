@@ -53,6 +53,16 @@ interface VideoPlayerProps {
     episodeNumber: number
     seasonNumber: number
   }
+  preload?: "none" | "metadata" | "auto"
+}
+
+// Define autoplay states for better tracking
+enum AutoplayState {
+  NOT_ATTEMPTED = "not_attempted",
+  ATTEMPTING = "attempting",
+  SUCCEEDED = "succeeded",
+  FAILED = "failed",
+  RETRY = "retry",
 }
 
 export function VideoPlayer({
@@ -68,9 +78,12 @@ export function VideoPlayer({
   onEpisodeChange,
   previousEpisodeInfo,
   nextEpisodeInfo,
+  preload = "auto",
 }: VideoPlayerProps) {
   const videoRef = useRef<HTMLVideoElement>(null)
   const playerRef = useRef<HTMLDivElement>(null)
+  const hlsRef = useRef<Hls | null>(null)
+
   const [isPlaying, setIsPlaying] = useState(false)
   const [currentTime, setCurrentTime] = useState(0)
   const [duration, setDuration] = useState(0)
@@ -80,7 +93,6 @@ export function VideoPlayer({
   const [showControls, setShowControls] = useState(true)
   const [isBuffering, setIsBuffering] = useState(false)
   const [showNextEpisodeButton, setShowNextEpisodeButton] = useState(false)
-  const [hasAttemptedAutoplay, setHasAttemptedAutoplay] = useState(false)
   const [isTransitioningToNextEpisode, setIsTransitioningToNextEpisode] = useState(false)
   const [currentEpisodeData, setCurrentEpisodeData] = useState({
     src,
@@ -93,10 +105,61 @@ export function VideoPlayer({
   // Add state variables for tooltip visibility
   const [showPrevTooltip, setShowPrevTooltip] = useState(false)
   const [showNextTooltip, setShowNextTooltip] = useState(false)
-
   const [showPlayPauseIndicator, setShowPlayPauseIndicator] = useState(false)
 
-  // Setup HLS streaming
+  // New state variables for better autoplay tracking
+  const [autoplayState, setAutoplayState] = useState<AutoplayState>(AutoplayState.NOT_ATTEMPTED)
+  const [autoplayAttempts, setAutoplayAttempts] = useState(0)
+  const [videoReady, setVideoReady] = useState(false)
+  const [hlsReady, setHlsReady] = useState(false)
+  const [userInteracted, setUserInteracted] = useState(false)
+  const [browserSupportsAutoplay, setBrowserSupportsAutoplay] = useState<boolean | null>(null)
+
+  // Add a new state variable to track if the video was auto-muted (vs user-muted)
+  const [wasAutoMuted, setWasAutoMuted] = useState(false)
+
+  // Debug logging function
+  const logDebug = (message: string, data?: any) => {
+    console.log(`[VideoPlayer] ${message}`, data || "")
+  }
+
+  // Check browser autoplay support
+  useEffect(() => {
+    const checkAutoplaySupport = async () => {
+      try {
+        logDebug("Checking browser autoplay support...")
+
+        // Create a test video element
+        const testVideo = document.createElement("video")
+        testVideo.muted = true
+        testVideo.setAttribute("playsinline", "")
+
+        // Use a tiny test video
+        testVideo.src =
+          "data:video/mp4;base64,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"
+
+        testVideo.load()
+        await testVideo
+          .play()
+          .then(() => {
+            logDebug("Autoplay is supported in this browser.")
+            setBrowserSupportsAutoplay(true)
+            testVideo.pause()
+          })
+          .catch((error) => {
+            logDebug("Autoplay is NOT supported in this browser.", error)
+            setBrowserSupportsAutoplay(false)
+          })
+      } catch (error) {
+        console.error("Error checking autoplay support:", error)
+        setBrowserSupportsAutoplay(false)
+      }
+    }
+
+    checkAutoplaySupport()
+  }, [])
+
+  // Setup HLS streaming with improved initialization
   useEffect(() => {
     const video = videoRef.current
     if (!video) return
@@ -129,16 +192,65 @@ export function VideoPlayer({
       }
     }
 
-    if (Hls.isSupported()) {
-      const hls = new Hls()
-      hls.loadSource(streamingSrc)
-      hls.attachMedia(video)
+    let hls: Hls | null = null
 
-      return () => {
-        hls.destroy()
+    // Function to initialize HLS
+    const initializeHls = () => {
+      if (Hls.isSupported()) {
+        logDebug("Initializing HLS.js for:", streamingSrc)
+        hls = new Hls({
+          // Add some HLS.js configuration for better performance
+          maxBufferLength: 30,
+          maxMaxBufferLength: 60,
+          startLevel: -1, // Auto-select quality level
+          debug: false,
+        })
+
+        hls.loadSource(streamingSrc)
+        hls.attachMedia(video)
+
+        // Store the HLS instance in the ref for later access
+        hlsRef.current = hls
+
+        // Listen for HLS events
+        hls.on(Hls.Events.MANIFEST_PARSED, () => {
+          logDebug("HLS manifest parsed, video ready to play")
+          setHlsReady(true)
+        })
+
+        hls.on(Hls.Events.ERROR, (event, data) => {
+          if (data.fatal) {
+            console.error("Fatal HLS error:", data)
+            if (data.type === Hls.ErrorTypes.NETWORK_ERROR) {
+              // Try to recover network error
+              hls?.startLoad()
+            } else if (data.type === Hls.ErrorTypes.MEDIA_ERROR) {
+              // Try to recover media error
+              hls?.recoverMediaError()
+            }
+          }
+        })
+      } else if (video.canPlayType("application/vnd.apple.mpegurl")) {
+        // For browsers that support HLS natively (Safari)
+        logDebug("Using native HLS support")
+        video.src = streamingSrc
+      } else {
+        console.warn("HLS is not supported in this browser")
+        // Fallback to regular video source
+        video.src = src
       }
-    } else if (video.canPlayType("application/vnd.apple.mpegurl")) {
-      video.src = streamingSrc
+    }
+
+    // Initialize HLS
+    initializeHls()
+
+    // Cleanup function
+    return () => {
+      if (hls) {
+        logDebug("Destroying HLS instance")
+        hls.destroy()
+        hlsRef.current = null
+      }
     }
   }, [src, videoId])
 
@@ -155,20 +267,21 @@ export function VideoPlayer({
     }
   }, [src, poster, title, videoId, creditsStartTime, isTransitioningToNextEpisode])
 
-  // Add a new useEffect for autoplay functionality
+  // Enhanced autoplay implementation with better loading detection and retry mechanism
   useEffect(() => {
     const video = videoRef.current
-    if (!video || !autoplay || hasAttemptedAutoplay) return
+    if (!video || !autoplay) return
 
-    // Mark that we've attempted autoplay to prevent multiple attempts
-    setHasAttemptedAutoplay(true)
-
-    // Function to start playback
+    // Function to start playback with retry mechanism
     const startPlayback = async () => {
       try {
+        logDebug("Attempting autoplay...")
+        setAutoplayState(AutoplayState.ATTEMPTING)
+
         // Most browsers require videos to be muted for autoplay without user interaction
         video.muted = true
         setIsMuted(true)
+        setWasAutoMuted(true)
 
         // Start playback
         const playPromise = video.play()
@@ -178,38 +291,111 @@ export function VideoPlayer({
             .then(() => {
               // Playback started successfully
               setIsPlaying(true)
-              console.log("Autoplay started successfully")
+              setAutoplayState(AutoplayState.SUCCEEDED)
+              logDebug("Autoplay started successfully")
             })
             .catch((error) => {
               // Autoplay was prevented
               console.warn("Autoplay prevented:", error)
-              // Keep the video paused and unmuted, waiting for user interaction
-              video.muted = false
-              setIsMuted(false)
+              setAutoplayState(AutoplayState.FAILED)
+
+              // Try again with a slight delay - some browsers need more time
+              setTimeout(() => {
+                logDebug("Retrying autoplay...")
+                setAutoplayState(AutoplayState.RETRY)
+                setAutoplayAttempts((prev) => prev + 1)
+
+                video
+                  .play()
+                  .then(() => {
+                    setIsPlaying(true)
+                    setAutoplayState(AutoplayState.SUCCEEDED)
+                    logDebug("Autoplay retry successful")
+                  })
+                  .catch((retryError) => {
+                    console.warn("Autoplay retry failed:", retryError)
+                    setAutoplayState(AutoplayState.FAILED)
+                    // Keep the video paused and unmuted, waiting for user interaction
+                    video.muted = false
+                    setIsMuted(false)
+                  })
+              }, 1000)
             })
         }
       } catch (error) {
         console.error("Error during autoplay:", error)
+        setAutoplayState(AutoplayState.FAILED)
       }
     }
 
-    // Wait for the video to be loaded enough to play
-    const handleCanPlay = () => {
-      startPlayback()
-    }
+    // Create a more robust loading detection system
+    const setupAutoplay = () => {
+      // Different events to try for autoplay
+      const events = ["loadedmetadata", "canplay", "loadeddata"]
+      let hasStartedPlayback = false
 
-    // If the video is already loaded enough, start playback immediately
-    if (video.readyState >= 3) {
-      // HAVE_FUTURE_DATA or higher
-      startPlayback()
-    } else {
-      // Otherwise, wait for the canplay event
-      video.addEventListener("canplay", handleCanPlay)
+      // Try to play on each of these events
+      const eventHandler = () => {
+        if (!hasStartedPlayback) {
+          hasStartedPlayback = true
+          startPlayback()
+
+          // Clean up all event listeners once we've started playback
+          events.forEach((e) => video.removeEventListener(e, eventHandler))
+        }
+      }
+
+      // Add all event listeners
+      events.forEach((e) => video.addEventListener(e, eventHandler))
+
+      // If the video is already loaded enough, start playback immediately
+      if (video.readyState >= 3) {
+        eventHandler()
+      }
+
+      // Fallback timer in case events don't fire
+      const fallbackTimer = setTimeout(() => {
+        if (!hasStartedPlayback) {
+          logDebug("Using fallback timer for autoplay")
+          eventHandler()
+        }
+      }, 2000)
+
+      // Return cleanup function
       return () => {
-        video.removeEventListener("canplay", handleCanPlay)
+        events.forEach((e) => video.removeEventListener(e, eventHandler))
+        clearTimeout(fallbackTimer)
       }
     }
-  }, [autoplay, hasAttemptedAutoplay])
+
+    // Setup autoplay after HLS is initialized
+    const cleanup = setupAutoplay()
+
+    return cleanup
+  }, [autoplay])
+
+  // Add a new useEffect to handle automatic unmuting after successful autoplay
+  useEffect(() => {
+    // Only proceed if video was auto-muted and playback has successfully started
+    if (wasAutoMuted && isPlaying && autoplayState === AutoplayState.SUCCEEDED) {
+      logDebug("Auto-unmuting video after successful autoplay")
+
+      // Add a small delay before unmuting to ensure stable playback
+      const unmutingTimeout = setTimeout(() => {
+        const video = videoRef.current
+        if (video && video.muted) {
+          // Start with low volume and gradually increase
+          video.volume = 0.3
+          video.muted = false
+          setIsMuted(false)
+          setWasAutoMuted(false)
+          logDebug("Video automatically unmuted")
+        }
+      }, 1000) // 1 second delay for stable playback
+
+      return () => clearTimeout(unmutingTimeout)
+    }
+  }, [wasAutoMuted, isPlaying, autoplayState])
 
   // Hide controls after inactivity
   useEffect(() => {
@@ -308,6 +494,13 @@ export function VideoPlayer({
       }
     }
 
+    // Add error event listener to the video element
+    const handleError = (e: Event) => {
+      console.error("Video error:", (e.target as HTMLVideoElement).error)
+      handlePlaybackError((e.target as HTMLVideoElement).error)
+    }
+
+    video.addEventListener("error", handleError)
     video.addEventListener("timeupdate", handleTimeUpdate)
     video.addEventListener("durationchange", handleDurationChange)
     video.addEventListener("play", handlePlay)
@@ -316,6 +509,7 @@ export function VideoPlayer({
     video.addEventListener("playing", handlePlaying)
     video.addEventListener("ended", handleEnded)
 
+    // Add to the cleanup function:
     return () => {
       video.removeEventListener("timeupdate", handleTimeUpdate)
       video.removeEventListener("durationchange", handleDurationChange)
@@ -324,6 +518,7 @@ export function VideoPlayer({
       video.removeEventListener("waiting", handleWaiting)
       video.removeEventListener("playing", handlePlaying)
       video.removeEventListener("ended", handleEnded)
+      video.removeEventListener("error", handleError)
     }
   }, [onNext, showNextEpisodeButton, currentEpisodeData.creditsStartTime, nextEpisodeData, isFullscreen])
 
@@ -441,7 +636,8 @@ export function VideoPlayer({
           video.addEventListener("loadeddata", playHandler)
 
           // Reset autoplay attempt flag to allow autoplay for the new episode
-          setHasAttemptedAutoplay(false)
+          setAutoplayState(AutoplayState.NOT_ATTEMPTED)
+          setAutoplayAttempts(0)
         }
       }, 100)
     } catch (error) {
@@ -489,10 +685,11 @@ export function VideoPlayer({
     if (isMuted) {
       video.muted = false
       setIsMuted(false)
-      setVolume(video.volume)
+      setWasAutoMuted(false) // User has taken control of audio
     } else {
       video.muted = true
       setIsMuted(true)
+      setWasAutoMuted(false) // User has taken control of audio
     }
   }
 
@@ -507,9 +704,11 @@ export function VideoPlayer({
     if (newVolume === 0) {
       video.muted = true
       setIsMuted(true)
+      setWasAutoMuted(false) // User has taken control of audio
     } else if (isMuted) {
       video.muted = false
       setIsMuted(false)
+      setWasAutoMuted(false) // User has taken control of audio
     }
   }
 
@@ -591,6 +790,38 @@ export function VideoPlayer({
     }
   }
 
+  // Function to handle playback errors and retry
+  const handlePlaybackError = (error: any) => {
+    console.error("Playback error:", error)
+
+    // If the video element exists, try to recover
+    const video = videoRef.current
+    if (video) {
+      // Try to reset the video source and reload
+      const currentSrc = video.src
+      video.src = ""
+
+      // Small timeout before restoring the source
+      setTimeout(() => {
+        video.src = currentSrc
+        video.load()
+
+        // Try to play again after loading
+        video.onloadeddata = () => {
+          video
+            .play()
+            .then(() => {
+              setIsPlaying(true)
+              console.log("Recovered from playback error")
+            })
+            .catch((retryError) => {
+              console.error("Failed to recover from playback error:", retryError)
+            })
+        }
+      }, 1000)
+    }
+  }
+
   return (
     <div ref={playerRef} className="relative w-full aspect-video bg-black max-h-[100vh]" onClick={togglePlay}>
       <video
@@ -599,6 +830,9 @@ export function VideoPlayer({
         poster={currentEpisodeData.poster}
         className="w-full h-full"
         onClick={togglePlay}
+        preload={preload}
+        playsInline // Add playsInline for better mobile support
+        onError={(e) => handlePlaybackError((e.target as HTMLVideoElement).error)}
       />
 
       {/* Play/Pause indicator animation */}

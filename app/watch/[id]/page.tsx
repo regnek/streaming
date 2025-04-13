@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useRef } from "react"
 import { useParams, useRouter } from "next/navigation"
 import { Play, Plus } from "lucide-react"
 
@@ -8,24 +8,39 @@ import { Button } from "@/components/ui/button"
 import { getVideoById } from "@/lib/api"
 import { VideoPlayer } from "@/components/video-player"
 import { RelatedVideos } from "@/components/related-videos"
+import { useNavigationVisibility } from "@/hooks/use-navigation-visibility"
 
 export default function WatchPage() {
   const params = useParams()
   const router = useRouter()
+  const initialRenderComplete = useRef(false)
   const [video, setVideo] = useState<any>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const videoContainerRef = useRef<HTMLDivElement>(null)
+  const { hideNavigation } = useNavigationVisibility()
+
+  // Mark component as mounted
+  useEffect(() => {
+    initialRenderComplete.current = true
+
+    // Force hide navigation on mount
+    hideNavigation()
+  }, [hideNavigation])
 
   useEffect(() => {
     const fetchVideo = async () => {
       if (params.id) {
         setIsLoading(true)
         try {
+          console.log(`Fetching video details for ID: ${params.id}`)
           // In a real app, this would fetch from an API
           const videoData = await getVideoById(params.id as string)
           setVideo(videoData)
+          console.log("Video details fetched successfully:", videoData.title)
 
           // If this is a TV show, redirect to the first episode of the first season
           if (videoData.category === "tv-show") {
+            console.log("Content is a TV show, redirecting to first episode")
             // Get the first season number (usually 1, but could be different)
             const firstSeasonNumber =
               videoData.seasons && videoData.seasons.length > 0
@@ -46,6 +61,11 @@ export default function WatchPage() {
     fetchVideo()
   }, [params.id, router])
 
+  // Don't render anything on the server
+  if (!initialRenderComplete.current) {
+    return null
+  }
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -65,7 +85,7 @@ export default function WatchPage() {
 
   return (
     <div className="min-h-screen bg-black">
-      <div className="relative">
+      <div ref={videoContainerRef} className="relative video-player-container">
         <VideoPlayer
           src={video.videoUrl}
           poster={video.thumbnail}

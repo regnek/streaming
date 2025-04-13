@@ -10,6 +10,7 @@ import { Menu, Search, User, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { useAuth } from "@/hooks/use-auth"
+import { useNavigationVisibility } from "@/hooks/use-navigation-visibility"
 
 export function Navbar() {
   const pathname = usePathname()
@@ -22,6 +23,9 @@ export function Navbar() {
   const [previousPage, setPreviousPage] = useState<string | null>(null)
   const [shouldFocusAfterNavigation, setShouldFocusAfterNavigation] = useState(false)
   const [lastActiveInput, setLastActiveInput] = useState<"desktop" | "mobile" | null>(null)
+
+  // Get navigation visibility state from context
+  const { isNavVisible } = useNavigationVisibility()
 
   // Refs for search input fields
   const desktopSearchRef = useRef<HTMLInputElement>(null)
@@ -137,12 +141,16 @@ export function Navbar() {
     }
   }, [searchTimeout])
 
+  // Determine if this is a watch page
+  const isWatchPage = pathname.startsWith("/watch")
+
+  // Apply transition classes based on navigation visibility
+  const navbarClasses = `fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+    isScrolled || mobileMenuOpen ? "bg-black" : "bg-gradient-to-b from-black/80 to-transparent"
+  } ${isWatchPage && !isNavVisible ? "-translate-y-full" : "translate-y-0"}`
+
   return (
-    <header
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-        isScrolled || mobileMenuOpen ? "bg-black" : "bg-gradient-to-b from-black/80 to-transparent"
-      }`}
-    >
+    <header className={navbarClasses}>
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
           <div className="flex items-center">
