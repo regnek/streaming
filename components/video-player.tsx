@@ -187,7 +187,7 @@ export function VideoPlayer({
         }
 
         // Generate dynamic streaming URL
-        streamingSrc = `https://d36cjdeusqqqhg.cloudfront.net/Shows/${showId}/${seasonNumber}/output/${episodeNumber}/${episodeNumber}_master.m3u8`
+        streamingSrc = `https://d36cjdeusqqqhg.cloudfront.net/Shows/${showId}/${seasonNumber}/${episodeNumber}/${episodeNumber}_master.m3u8`
         console.log(`Generated dynamic streaming URL: ${streamingSrc}`)
       }
     }
