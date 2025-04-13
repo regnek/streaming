@@ -51,7 +51,6 @@ export function DynamicNavbar() {
       observerRef.current = new IntersectionObserver(
         (entries) => {
           const [entry] = entries
-          console.log("Video player intersection:", entry.isIntersecting ? "visible" : "hidden")
 
           // Show navbar when video player is NOT in view (scrolled past it)
           // Hide navbar when video player IS in view
@@ -66,7 +65,6 @@ export function DynamicNavbar() {
 
       // Start observing the video player
       observerRef.current.observe(targetElement)
-      console.log("Observer set up for video player element")
     }
 
     // Start the process
@@ -76,7 +74,6 @@ export function DynamicNavbar() {
     return () => {
       if (observerRef.current) {
         observerRef.current.disconnect()
-        console.log("Observer disconnected")
       }
     }
   }, [isWatchPage, setIsNavVisible])
@@ -86,23 +83,58 @@ export function DynamicNavbar() {
     if (!isWatchPage) return
 
     let lastScrollY = window.scrollY
+    let lastScrollDirection: "up" | "down" = "down"
+    let scrollTimer: NodeJS.Timeout | null = null
 
     const handleScroll = () => {
       const currentScrollY = window.scrollY
+      const currentDirection = currentScrollY > lastScrollY ? "down" : "up"
 
-      // If scrolling up and near the top, ensure navbar is hidden
-      // This prevents the navbar from appearing when slightly scrolling at the top
-      if (currentScrollY < lastScrollY && currentScrollY < 50) {
+      // Clear existing timer
+      if (scrollTimer) {
+        clearTimeout(scrollTimer)
+      }
+
+      // If scrolling up and we've scrolled a significant amount, show the navbar
+      if (currentDirection === "up" && lastScrollDirection === "down" && currentScrollY < lastScrollY - 50) {
+        setIsNavVisible(true)
+      }
+
+      // If scrolling down and we've scrolled a significant amount, hide the navbar
+      if (currentDirection === "down" && lastScrollDirection === "up" && currentScrollY > lastScrollY + 50) {
         setIsNavVisible(false)
       }
 
+      // If at the top of the page, hide navbar (to show video controls)
+      if (currentScrollY < 50) {
+        setIsNavVisible(false)
+      }
+
+      // If at the bottom of the page, show navbar
+      if (window.innerHeight + currentScrollY >= document.body.offsetHeight - 100) {
+        setIsNavVisible(true)
+      }
+
+      // Update last values
       lastScrollY = currentScrollY
+      lastScrollDirection = currentDirection
+
+      // Set a timer to stabilize navbar visibility after scrolling stops
+      scrollTimer = setTimeout(() => {
+        // If we've stopped scrolling near the top, keep navbar hidden
+        if (window.scrollY < 100) {
+          setIsNavVisible(false)
+        }
+      }, 150)
     }
 
     window.addEventListener("scroll", handleScroll, { passive: true })
 
     return () => {
       window.removeEventListener("scroll", handleScroll)
+      if (scrollTimer) {
+        clearTimeout(scrollTimer)
+      }
     }
   }, [isWatchPage, setIsNavVisible])
 

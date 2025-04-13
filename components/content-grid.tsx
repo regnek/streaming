@@ -1,5 +1,6 @@
 import Link from "next/link"
 import Image from "next/image"
+import { RottenTomatoesRating } from "@/components/rotten-tomatoes-rating"
 
 interface ContentItem {
   id: string
@@ -11,6 +12,7 @@ interface ContentItem {
   progress?: number
   subtitle?: string
   episodeCount?: number
+  rottenTomatoesRating?: number
 }
 
 interface ContentGridProps {
@@ -66,9 +68,20 @@ export function ContentGrid({ items }: ContentGridProps) {
                   {(item.releaseYear || item.duration || item.episodeCount) && (
                     <div className="text-xs text-gray-400 mt-1">
                       {item.releaseYear && <span>{item.releaseYear}</span>}
-                      {item.releaseYear && (item.duration || item.episodeCount) && <span className="mx-1">•</span>}
+                      {item.releaseYear && (item.duration || item.episodeCount || item.rottenTomatoesRating) && (
+                        <span className="mx-1">•</span>
+                      )}
                       {item.duration && <span>{item.duration}</span>}
                       {!item.duration && item.episodeCount && <span>{item.episodeCount} Episodes</span>}
+                      {item.rottenTomatoesRating && (
+                        <>
+                          {(item.duration || item.episodeCount) && <span className="mx-1">•</span>}
+                          <span className="inline-flex items-center">
+                            <RottenTomatoesRating rating={item.rottenTomatoesRating} size="sm" showText={false} />
+                            <span className="ml-1">{item.rottenTomatoesRating}%</span>
+                          </span>
+                        </>
+                      )}
                     </div>
                   )}
                 </>

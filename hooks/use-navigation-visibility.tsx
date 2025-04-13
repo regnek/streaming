@@ -24,6 +24,25 @@ export function NavigationVisibilityProvider({ children }: { children: ReactNode
     setIsNavVisible(!isWatchPage)
   }, [pathname])
 
+  // Handle window resize events to ensure proper visibility on different devices
+  useEffect(() => {
+    const handleResize = () => {
+      // On larger screens, we might want to show the navigation more often
+      if (window.innerWidth >= 1024 && !pathname.startsWith("/watch/")) {
+        setIsNavVisible(true)
+      }
+    }
+
+    window.addEventListener("resize", handleResize)
+
+    // Initial check
+    handleResize()
+
+    return () => {
+      window.removeEventListener("resize", handleResize)
+    }
+  }, [pathname])
+
   const hideNavigation = () => setIsNavVisible(false)
   const showNavigation = () => setIsNavVisible(true)
   const toggleNavigation = () => setIsNavVisible((prev) => !prev)

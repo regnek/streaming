@@ -2,14 +2,16 @@
 
 import type React from "react"
 
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useRef, useCallback } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
-import { Search, X } from "lucide-react"
+import { SearchIcon, X, AlertCircle } from "lucide-react"
 
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { ContentGrid } from "@/components/content-grid"
-import { searchVideos } from "@/lib/api"
+import { searchContent } from "@/lib/content-service"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import { InfiniteScrollObserver } from "@/components/infinite-scroll-observer"
 
 export default function SearchPage() {
   const searchParams = useSearchParams()
@@ -19,6 +21,10 @@ export default function SearchPage() {
   const [query, setQuery] = useState(initialQuery)
   const [results, setResults] = useState<any[]>([])
   const [isLoading, setIsLoading] = useState(false)
+  const [isLoadingMore, setIsLoadingMore] = useState(false)
+  const [currentPage, setCurrentPage] = useState(1)
+  const [hasMore, setHasMore] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const [searchTimeout, setSearchTimeout] = useState<NodeJS.Timeout | null>(null)
   const [previousPage, setPreviousPage] = useState<string | null>(null)
   const [shouldFocusAfterNavigation, setShouldFocusAfterNavigation] = useState(false)
@@ -38,28 +44,52 @@ export default function SearchPage() {
   }, [])
 
   // Function to perform the search
-  const performSearch = async (searchQuery: string) => {
+  const performSearch = useCallback(async (searchQuery: string, page = 1, isLoadingMore = false) => {
     if (!searchQuery.trim()) {
       setResults([])
+      setHasMore(false)
       return
     }
 
-    setIsLoading(true)
+    if (page === 1) {
+      setIsLoading(true)
+    } else {
+      setIsLoadingMore(true)
+    }
+
+    setError(null)
+
     try {
-      // In a real app, this would search via an API
-      const searchResults = await searchVideos(searchQuery)
-      setResults(searchResults)
+      // Use the searchContent function from content-service.ts
+      const searchResults = await searchContent(searchQuery, page)
+
+      // Update results based on whether we're loading more or starting fresh
+      if (isLoadingMore) {
+        setResults((prevResults) => [...prevResults, ...searchResults])
+      } else {
+        setResults(searchResults)
+      }
+
+      // Determine if there are more results to load
+      // TMDB typically returns 20 results per page
+      setHasMore(searchResults.length >= 20)
     } catch (error) {
       console.error("Search failed:", error)
+      setError("Failed to retrieve search results. Please try again.")
     } finally {
-      setIsLoading(false)
+      if (page === 1) {
+        setIsLoading(false)
+      } else {
+        setIsLoadingMore(false)
+      }
     }
-  }
+  }, [])
 
   // Initial search when page loads with a query parameter
   useEffect(() => {
     if (initialQuery) {
-      performSearch(initialQuery)
+      setCurrentPage(1)
+      performSearch(initialQuery, 1, false)
     }
 
     // Auto-focus the search input when the page loads
@@ -67,7 +97,7 @@ export default function SearchPage() {
       searchInputRef.current.focus()
       setHasBeenFocused(true)
     }
-  }, [initialQuery])
+  }, [initialQuery, performSearch])
 
   // Focus input after navigation if needed
   useEffect(() => {
@@ -121,8 +151,9 @@ export default function SearchPage() {
         window.history.pushState({}, "", url.toString())
       }
 
-      // Perform the search
-      performSearch(newQuery)
+      // Reset page number and perform the search
+      setCurrentPage(1)
+      performSearch(newQuery, 1, false)
 
       // Ensure input maintains focus after URL update
       if (searchInputRef.current) {
@@ -142,6 +173,15 @@ export default function SearchPage() {
     setShouldFocusAfterNavigation(true)
     router.push(targetPage)
   }
+
+  // Load more search results
+  const loadMore = useCallback(() => {
+    if (!isLoadingMore && hasMore && query.trim()) {
+      const nextPage = currentPage + 1
+      setCurrentPage(nextPage)
+      performSearch(query, nextPage, true)
+    }
+  }, [currentPage, hasMore, isLoadingMore, performSearch, query])
 
   // Maintain focus after component updates if the input has been focused before
   useEffect(() => {
@@ -189,11 +229,19 @@ export default function SearchPage() {
               </Button>
             ) : null}
             <Button variant="ghost" size="icon" className="absolute right-0 top-0 h-full">
-              <Search className="w-4 h-4" />
+              <SearchIcon className="w-4 h-4" />
               <span className="sr-only">Search</span>
             </Button>
           </div>
         </div>
+
+        {error && (
+          <Alert variant="destructive" className="mb-6">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>Error</AlertTitle>
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
 
         {isLoading ? (
           <div className="flex justify-center py-12">
@@ -207,7 +255,21 @@ export default function SearchPage() {
               </h2>
             )}
 
-            {results.length > 0 && <ContentGrid items={results} />}
+            {results.length > 0 && (
+              <>
+                <ContentGrid items={results} />
+
+                {/* Infinite scroll observer */}
+                <InfiniteScrollObserver onIntersect={loadMore} isLoading={isLoadingMore} hasMore={hasMore} />
+
+                {/* Show a message when there are no more results to load */}
+                {!hasMore && results.length > 0 && (
+                  <div className="text-center py-8 text-gray-400">
+                    <p>You've reached the end of the search results</p>
+                  </div>
+                )}
+              </>
+            )}
           </>
         )}
       </div>

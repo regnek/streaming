@@ -30,6 +30,19 @@ body {
   z-index: 1;
 }
 
+/* Add styles for navbar transitions */
+.navbar-transition {
+  transition: transform 0.3s ease, background-color 0.3s ease;
+}
+
+/* Add responsive adjustments for navbar */
+@media (max-width: 640px) {
+  .mobile-menu-container {
+    max-height: calc(100vh - 4rem);
+    overflow-y: auto;
+  }
+}
+
 @layer base {
   :root {
     --background: 0 0% 100%;

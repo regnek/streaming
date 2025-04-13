@@ -39,7 +39,7 @@ export async function getTrendingContent(page = 1): Promise<any[]> {
 // Update the error handling in getPopularMovies to log more details
 export async function getPopularMovies(page = 1): Promise<any[]> {
   try {
-    console.log("Fetching popular movies with TMDB API...")
+    console.log("Fetching popular movies with TMDB API for page:", page)
     const data = await tmdbApi.getPopularMovies(page)
     console.log("Successfully fetched popular movies:", data.results.length, "items")
     return data.results.map(tmdbAdapter.adaptMovie)
@@ -55,7 +55,7 @@ export async function getPopularMovies(page = 1): Promise<any[]> {
 // Update the error handling in getPopularTVShows to log more details
 export async function getPopularTVShows(page = 1): Promise<any[]> {
   try {
-    console.log("Fetching popular TV shows with TMDB API...")
+    console.log("Fetching popular TV shows with TMDB API for page:", page)
     const data = await tmdbApi.getPopularTVShows(page)
     console.log("Successfully fetched popular TV shows:", data.results.length, "items")
     return data.results.map(tmdbAdapter.adaptTVShow)
@@ -155,7 +155,7 @@ export async function getNewReleases(page = 1): Promise<any[]> {
         const dateB = b.releaseDate ? new Date(b.releaseDate).getTime() : 0
         return dateB - dateA
       })
-      .slice(0, 20) // Limit to 20 items
+      .slice(0, 20) // Limit to 20 items per page
   } catch (error) {
     console.error("Error fetching new releases:", error)
     // Fallback to mock data on error
